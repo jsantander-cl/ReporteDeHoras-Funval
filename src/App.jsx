@@ -1,3 +1,5 @@
+//📌 Enrutador centralizado con react-router-dom y envoltura de contextos
+
 import FormularioReporte from './components/FormularioReporte';
 
 function App() {
