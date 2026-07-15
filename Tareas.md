@@ -1,78 +1,170 @@
-📝 # Tareas – Sistema de Gestión de Horas de Servicio
-## FASE 1 – Cimientos y Autenticación (Arrancan todos en paralelo, nadie espera a nadie)
-•	[Líder] Setup del repositorio y Git Flow
-o	Crear repositorio, configurar ramas main (protegida) y develop.
-o	Definir la convención de ramas feature/nombre-card por tarjeta de Trello.
-o	Crear el archivo .env base (VITE_API_URL) y redactar el README.md con las instrucciones de instalación.
-•	[Líder] Base del Layout Principal (Sidebar + Navbar)
-o	Construir el cascarón o shell básico de navegación (Sidebar + Navbar) usando <Outlet />.
-o	DoD: Debe ser un diseño responsivo inicial para que los desarrolladores puedan incrustar sus páginas inmediatamente.
-•	[Dev A] Página de Login 🟢
-o	POST /api/v1/auth/login. Diseño del formulario y manejo de errores de credenciales inválidas.
-•	[Dev A] Manejo de sesión y token JWT (AuthContext) 🟢
-o	Crear el context/AuthContext.jsx para almacenar el estado global: user, role e isAuthenticated.
-o	Persistir el token manualmente en cookies o localStorage al iniciar sesión.
-o	Implementar la hidratación automática consultando el perfil del usuario al refrescar la página.
-•	[Dev A] Logout 🟢
-o	POST /api/v1/auth/logout. Función para destruir la sesión del servidor, limpiar el almacenamiento local y vaciar el Context.
-•	[Dev A] Protección de rutas (Route Guards) 🟢
-o	Implementar los componentes de envoltura <PrivateRoute> y <RoleRoute role="ADMIN"> para restringir accesos según los permisos del JWT.
-________________________________________
-## FASE 2 – Componentes Compartidos y Vistas de Perfil (Preparando utilidades)
-•	[Dev B] Componente: Sistema de notificaciones (Toast) 🔵
-o	Crear un sistema de alertas flotantes (Toasts) reutilizable globalmente para notificar éxitos (ej: "Reporte enviado") o errores (ej: "Error de servidor").
-•	[Dev B] Componente: Modal de confirmación genérico 🔵
-o	Crear un modal reutilizable que acepte un título, un mensaje y una acción callback.
-o	Se utilizará para advertir al usuario antes de eliminar registros o confirmar envíos críticos.
-•	[Dev C] Componente de Paginación 🟡
-o	Componente UI reutilizable encargado de renderizar los controles de página anteriores/siguientes y números de página.
-o	Debe aceptar la cantidad total de páginas y la página actual como propiedades (props).
-•	[Dev C] Badge de estado de reporte 🟡
-o	Pequeño componente visual para mostrar las etiquetas de estado: Pendiente (Amarillo), Aprobado (Verde) o Rechazado (Rojo).
-•	[Dev D] Página: Mi Perfil 🔴
-o	Vista del usuario autenticado que consume los datos de la sesión para mostrar su información personal y el resumen general de sus horas.
-•	[Dev D] Página: Cambiar contraseña 🔴
-o	Formulario seguro con validación de campos (contraseña actual, nueva contraseña y confirmación) para actualizar las credenciales de acceso.
-________________________________________
-## FASE 3 – Construcción de Módulos Core (Student Views & Admin Views)
-Nota estricta de arquitectura: Al no utilizar instancias ni interceptores de Axios, cada desarrollador es responsable de recuperar el token manualmente desde su almacenamiento en cada función de servicio (const token = localStorage.getItem('token');) e inyectarlo explícitamente en el encabezado de la petición: headers: { Authorization: \Bearer ${token}` }`.
-👨‍🎓 Sub-módulo: Student Views (Vistas del Estudiante)
-•	[Dev B] Dashboard del Estudiante 🔵
-o	Página de bienvenida con paneles informativos que reflejan el estado del estudiante y el acumulado de sus horas de servicio.
-•	[Dev B] Listado de mis reportes 🔵
-o	Tabla que enumera los reportes creados por el alumno. Integra el componente de paginación (Dev C) y los badges de estado (Dev C).
-•	[Dev B] Visualizar evidencia PDF 🔵
-o	Ventana o contenedor embebido para previsualizar los archivos adjuntos cargados como evidencia de las horas trabajadas.
-•	[Dev C] Formulario de envío de reporte (con Componente de carga de archivos PDF) 🟡
-o	Formulario de entrada de datos donde el estudiante describe su actividad.
-o	Incluye la lógica de carga para adjuntar el archivo PDF transformándolo a un objeto FormData para su envío por HTTP.
-•	[Dev C] Editar reporte pendiente 🟡
-o	Reutilización del formulario de envío cargando los datos previos de un reporte. Solo se permite el acceso si el estado del reporte se encuentra estrictamente en "Pendiente".
-💼 Sub-módulo: Admin Views (Vistas de Administrador)
-•	[Dev A] Dashboard de Administrador 🟢
-o	Panel principal con contadores analíticos rápidos (Total de estudiantes, reportes pendientes por revisar, etc.).
-•	[Dev A] Listado de Usuarios y Eliminar usuario 🟢
-o	Tabla global de administración que despliega a todos los usuarios del sistema (estudiantes, profesores, personal administrativo) con la opción integrada de dar de baja o eliminar un registro.
-•	[Dev A] Formulario de creación de usuario 🟢
-o	Formulario detallado para dar de alta nuevas cuentas de usuario de manera individual especificando sus roles y datos base.
-•	[Dev A] Estudiantes con horas pendientes (In-Debt) 🟢
-o	Vista de filtro rápido que agrupa exclusivamente a aquellos estudiantes que aún no han completado el requisito obligatorio de sus horas.
-•	[Dev B] Listado de Reportes con filtros 🔵 (Apoyo al módulo de administración)
-o	pages/admin/AdminReportList.jsx: Tabla centralizada para los administradores donde confluyen todas las solicitudes. Debe incluir filtros interactivos por estudiante, rango de fechas y estado del reporte.
-•	[Dev B] Modal de revisión de reporte 🔵 (Apoyo al módulo de administración)
-o	pages/admin/ReviewReportModal.jsx: Ventana emergente de revisión. Permite al administrador examinar la descripción, abrir la evidencia PDF, asignar el número de horas definitivo a convalidar y marcar el dictamen final como "Aprobado" o "Rechazado".
-•	[Dev D] Importación masiva de usuarios (CSV) 🔴
-o	Componente que procesa la carga de un archivo estructurado en formato .csv, valida la información en el cliente y realiza el envío por bloques a la API para dar de alta múltiples estudiantes simultáneamente.
-•	[Dev D] Gestión de Categorías (CRUD) 🔴
-o	Pantalla completa para listar, crear, modificar y eliminar las categorías que clasifican los reportes de horas de servicio.
-•	[Dev D] Gestión de Cursos (CRUD) 🔴
-o	Pantalla para el control total sobre los cursos o niveles lectivos del instituto.
-•	[Dev D] Gestión de Países (CRUD) 🔴
-o	Pantalla para la administración de catálogos geográficos necesarios para el registro del alumnado.
-________________________________________
-## FASE 4 – QA, Code Review e Integración (El Líder toma el control total)
-•	[Todos] Manejo de Excepciones y Caducidad de Sesión
-o	Implementar de forma manual bloques try/catch en cada componente. Si la API retorna un error 401 Unauthorized debido a un token expirado, el sistema debe vaciar inmediatamente el AuthContext y redirigir al usuario al Login.
-•	[Líder] Auditoría Técnica y Cierre de Ramas
-o	Revisar de manera exhaustiva cada Pull Request enfocado en verificar que ningún desarrollador haya implementado interceptores camuflados o instancias aisladas de Axios (axios.create).
-o	Conducir pruebas de integración de extremo a extremo: Importar un alumno por CSV -> Iniciar sesión con ese alumno -> Enviar reporte con PDF -> Filtrar y Aprobar el reporte desde el perfil de Admin -> Validar el balance de horas actualizado en el perfil del alumno.
+---
+name: Academic Core
+colors:
+  surface: '#faf8ff'
+  surface-dim: '#d9d9e2'
+  surface-bright: '#faf8ff'
+  surface-container-lowest: '#ffffff'
+  surface-container-low: '#f3f3fc'
+  surface-container: '#ededf6'
+  surface-container-high: '#e7e7f1'
+  surface-container-highest: '#e1e2eb'
+  on-surface: '#191b22'
+  on-surface-variant: '#434653'
+  inverse-surface: '#2e3037'
+  inverse-on-surface: '#f0f0f9'
+  outline: '#737784'
+  outline-variant: '#c3c6d5'
+  surface-tint: '#1d59c1'
+  primary: '#003c90'
+  on-primary: '#ffffff'
+  primary-container: '#0f52ba'
+  on-primary-container: '#bcceff'
+  inverse-primary: '#b0c6ff'
+  secondary: '#505f76'
+  on-secondary: '#ffffff'
+  secondary-container: '#d0e1fb'
+  on-secondary-container: '#54647a'
+  tertiary: '#3d4143'
+  on-tertiary: '#ffffff'
+  tertiary-container: '#55585a'
+  on-tertiary-container: '#ccced0'
+  error: '#ba1a1a'
+  on-error: '#ffffff'
+  error-container: '#ffdad6'
+  on-error-container: '#93000a'
+  primary-fixed: '#d9e2ff'
+  primary-fixed-dim: '#b0c6ff'
+  on-primary-fixed: '#001945'
+  on-primary-fixed-variant: '#00419c'
+  secondary-fixed: '#d3e4fe'
+  secondary-fixed-dim: '#b7c8e1'
+  on-secondary-fixed: '#0b1c30'
+  on-secondary-fixed-variant: '#38485d'
+  tertiary-fixed: '#e0e3e5'
+  tertiary-fixed-dim: '#c4c7c9'
+  on-tertiary-fixed: '#191c1e'
+  on-tertiary-fixed-variant: '#444749'
+  background: '#faf8ff'
+  on-background: '#191b22'
+  surface-variant: '#e1e2eb'
+typography:
+  display-lg:
+    fontFamily: Inter
+    fontSize: 48px
+    fontWeight: '700'
+    lineHeight: 56px
+    letterSpacing: -0.02em
+  headline-lg:
+    fontFamily: Inter
+    fontSize: 32px
+    fontWeight: '600'
+    lineHeight: 40px
+    letterSpacing: -0.01em
+  headline-lg-mobile:
+    fontFamily: Inter
+    fontSize: 24px
+    fontWeight: '600'
+    lineHeight: 32px
+  headline-md:
+    fontFamily: Inter
+    fontSize: 24px
+    fontWeight: '600'
+    lineHeight: 32px
+  title-md:
+    fontFamily: Inter
+    fontSize: 18px
+    fontWeight: '500'
+    lineHeight: 24px
+  body-lg:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: '400'
+    lineHeight: 24px
+  body-md:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: '400'
+    lineHeight: 20px
+  label-md:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: '600'
+    lineHeight: 16px
+    letterSpacing: 0.05em
+rounded:
+  sm: 0.25rem
+  DEFAULT: 0.5rem
+  md: 0.75rem
+  lg: 1rem
+  xl: 1.5rem
+  full: 9999px
+spacing:
+  base: 4px
+  xs: 8px
+  sm: 16px
+  md: 24px
+  lg: 32px
+  xl: 48px
+  container-max: 1440px
+  sidebar-width: 260px
+---
+
+## Brand & Style
+The design system is built on the pillars of transparency, efficiency, and institutional trust. It bridges the gap between high-utility administrative software and user-centric educational tools. The style is **Corporate Modern**, prioritizing clarity and speed of information retrieval for students and administrators.
+
+The visual language uses a structured hierarchy with ample whitespace to reduce cognitive load during data-heavy tasks. It employs a "Soft Professional" aesthetic—utilizing geometric precision tempered by intentional roundedness to appear approachable yet authoritative. The emotional response should be one of calm control and reliability.
+
+## Colors
+The palette is anchored by a deep **Institutional Blue** that signals stability. This is supported by a functional range of neutrals and semantic status colors.
+
+- **Primary**: Used for key actions, active navigation states, and primary branding.
+- **Secondary**: A cool slate gray for secondary actions and iconography.
+- **Surface**: Backgrounds use a tiered system of clean whites and ultra-light grays (#F8FAFC) to separate content zones.
+- **Status Colors**: High-saturation hues for immediate recognition of report statuses:
+    - **Success (Green)**: Approved / Completed.
+    - **Warning (Yellow)**: Pending / Action Required.
+    - **Error (Red)**: Rejected / Overdue.
+
+## Typography
+This design system utilizes **Inter** for its exceptional legibility in data-dense environments. 
+
+- **Hierarchy**: Use `display-lg` exclusively for dashboard overviews. `headline-md` and `title-md` serve as the primary structural markers for page sections and card titles.
+- **Data Tables**: Body copy for tables should use `body-md` to maximize information density without sacrificing readability.
+- **Labels**: `label-md` is reserved for table headers and status badges to provide clear visual distinction from data.
+
+## Layout & Spacing
+The system follows an **8px grid** for vertical rhythm and a **12-column fluid grid** for content.
+
+- **Sidebar**: A fixed left-hand navigation (260px) provides consistent orientation. On mobile, this transitions to a bottom navigation bar or a hidden drawer.
+- **Page Margins**: Standard desktop margins are 32px (`lg`), scaling down to 16px (`sm`) on mobile.
+- **Gaps**: Use 24px (`md`) for the main gutter between cards and 16px (`sm`) for spacing within card elements.
+- **Density**: Administrators have a "Compact Mode" option that reduces internal padding by 50% for high-volume data review.
+
+## Elevation & Depth
+Depth is created through **Tonal Layering** and **Ambient Shadows**.
+
+1.  **Level 0 (Background)**: The base canvas is `#F8FAFC`.
+2.  **Level 1 (Cards/Sidebar)**: Pure white (#FFFFFF) with a soft, 1px neutral border (#E2E8F0).
+3.  **Level 2 (Hover/Active States)**: A very diffused shadow: `0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)`.
+4.  **Level 3 (Modals)**: High elevation with a darker backdrop blur to isolate administrative tasks.
+
+Avoid heavy black shadows; use blue-tinted grays for shadow colors to maintain the professional palette.
+
+## Shapes
+The design system uses a **Rounded (8px)** corner strategy to soften the corporate aesthetic and feel modern.
+
+- **Standard Elements**: Buttons, Input fields, and Cards use the base 8px (`rounded-md`).
+- **Large Components**: Dashboards containers and main modals use 16px (`rounded-lg`).
+- **Badges**: Status badges use a fully pill-shaped radius to distinguish them as non-interactive status indicators.
+- **Selection Markers**: Active sidebar states use a 4px rounded vertical bar on the leading edge.
+
+## Components
+
+- **Buttons**: Primary buttons are solid Blue. Secondary buttons use an outline style with a 1px border. All buttons include a subtle hover transition that darkens the background by 10%.
+- **Status Badges**: Small, pill-shaped markers with a light background tint and high-contrast text of the same hue (e.g., Green text on light green background).
+- **Cards**: The primary container for reports. Cards must include a `title-md` header, a subtle 1px divider, and a padded body area.
+- **Data Tables**: Zebra-striping is omitted in favor of thin horizontal lines. Headers are sticky and use the `label-md` typography.
+- **Input Fields**: Labeled clearly above the field. Focus states use a 2px Primary Blue glow.
+- **Sidebar**: Dark-themed (`neutral_gray`) or Light-themed; active links are highlighted with the Primary Blue and a subtle background tint.
+- **Search Bars**: Located prominently in the header, utilizing a magnifying glass icon and a soft grey background for quick accessibility.
