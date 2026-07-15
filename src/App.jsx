@@ -1,11 +1,11 @@
-//📌 Enrutador centralizado con react-router-dom y envoltura de contextos
-
-import FormularioReporte from './components/FormularioReporte';
+import React from 'react';
+import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <FormularioReporte /> {/* Esto solo es momentanio */}
+    <div className="min-h-screen bg-gray-100">
+      {/* Visualizamos la pantalla de Mantenimiento Global */}
+      <MantenimientoGlobal />
     </div>
   );
 }
