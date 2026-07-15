@@ -30,19 +30,6 @@ function App() {
   }
 
   return (
-<<<<<<< HEAD
-  
-    //MIGUEL
-    <div className="min-h-screen bg-gray-100 p-4">
-      
-      <UsersListPage></UsersListPage>
-    <div className="min-h-screen bg-gray-100">
-      {/* Visualizamos la pantalla de Mantenimiento Global */}
-      <MantenimientoGlobal />
-    </div>
-  );
-=======
->>>>>>> 9909a4e (restructuracion de codigo)
     <Routes>
       {/* Ruta pública */}
       <Route
