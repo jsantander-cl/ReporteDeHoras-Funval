@@ -1,8 +1,15 @@
+//📌 Enrutador centralizado con react-router-dom y envoltura de contextos
+
+// (MIGUEL) import FormularioReporte from './components/FormularioReporte';
+//(ROLANDO)
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Login from './pages/shared/Login'
 import StudentDashboard from './pages/student/StudentDashboard'
 import Spinner from './components/common/Spinner'
+//(JORDAN)
+import React from 'react';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
   const { user, isLoading } = useAuth()
