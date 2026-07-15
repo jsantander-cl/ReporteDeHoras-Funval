@@ -1,3 +1,6 @@
+
+import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal';
+=======
 //📌 Enrutador centralizado con react-router-dom y envoltura de contextos
 
 // (MIGUEL) import FormularioReporte from './components/FormularioReporte';
@@ -10,6 +13,7 @@ import Spinner from './components/common/Spinner'
 //(JORDAN)
 import React from 'react';
 import AdminDashboard from './pages/admin/AdminDashboard';
+
 
 function App() {
   const { user, isLoading } = useAuth()
@@ -24,6 +28,11 @@ function App() {
   }
 
   return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Visualizamos la pantalla de Mantenimiento Global */}
+      <MantenimientoGlobal />
+    </div>
+  );
     <Routes>
       {/* Ruta pública - Login */}
       <Route path="/login" element={<Login />} />
