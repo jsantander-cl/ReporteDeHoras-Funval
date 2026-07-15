@@ -2,7 +2,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { LogOut } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const LogoutButton = () => {
+const LogoutButton = ({ compact = false }) => {
   const { logout } = useAuth()
 
   const handleLogout = async () => {
@@ -10,6 +10,18 @@ const LogoutButton = () => {
       await logout()
       toast.success('Sesión cerrada correctamente')
     }
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={handleLogout}
+        title="Cerrar sesión"
+        className="flex items-center justify-center w-9 h-9 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+      >
+        <LogOut className="w-4 h-4" />
+      </button>
+    )
   }
 
   return (

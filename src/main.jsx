@@ -1,5 +1,3 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
@@ -8,8 +6,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <App />
@@ -22,5 +20,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         />
       </AuthProvider>
     </BrowserRouter>
-  </React.StrictMode>,
+  </StrictMode>,
 )

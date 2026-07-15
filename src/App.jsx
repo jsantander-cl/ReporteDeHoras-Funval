@@ -1,26 +1,26 @@
-
-import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal';
-=======
-//📌 Enrutador centralizado con react-router-dom y envoltura de contextos
-
-//MIGUEL
-import UsersListPage from "./pages/admin/UsersListPage";
-// (MIGUEL) import FormularioReporte from './components/FormularioReporte';
-//(ROLANDO)
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import Spinner from './components/common/Spinner'
+
+import PrivateRoute from './components/routes/PrivateRoute'
+import RoleRoute from './components/routes/RoleRoute'
+import EstructuraPrincipal from './components/design/EstructuraPrincipal'
+
+// Páginas
 import Login from './pages/shared/Login'
 import StudentDashboard from './pages/student/StudentDashboard'
-import Spinner from './components/common/Spinner'
-//(JORDAN)
-import React from 'react';
-import AdminDashboard from './pages/admin/AdminDashboard';
-
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminReportsPage from './pages/admin/AdminReportsPage'
+import UsersListPage from './pages/admin/UsersListPage'
+// import UserForm from './pages/admin/UserForm'
+// import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
+import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
+// import ProfilePage from './pages/perfil/ProfilePage'
+// import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 
 function App() {
   const { user, isLoading } = useAuth()
 
-  // ✅ Pantalla de carga mientras verifica la sesión
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -30,6 +30,7 @@ function App() {
   }
 
   return (
+<<<<<<< HEAD
   
     //MIGUEL
     <div className="min-h-screen bg-gray-100 p-4">
@@ -40,75 +41,69 @@ function App() {
       <MantenimientoGlobal />
     </div>
   );
+=======
+>>>>>>> 9909a4e (restructuracion de codigo)
     <Routes>
-      {/* Ruta pública - Login */}
-      <Route path="/login" element={<Login />} />
-      
-      {/* Dashboard del Estudiante */}
-      <Route 
-        path="/student/dashboard" 
+      {/* Ruta pública */}
+      <Route
+        path="/login"
         element={
           user ? (
-            user.role === 'STUDENT' ? (
-              <StudentDashboard />
-            ) : (
-              <Navigate to="/admin/dashboard" replace />
-            )
+            <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard'} replace />
+          ) : (
+            <Login />
+          )
+        }
+      />
+
+      {/* Todo lo privado vive dentro de PrivateRoute > EstructuraPrincipal */}
+      <Route element={<PrivateRoute />}>
+        <Route element={<EstructuraPrincipal />}>
+
+          {/* Compartidas entre ADMIN y STUDENT */}
+          {/* <Route path="/perfil" element={<ProfilePage />} /> */}
+          {/* <Route path="/perfil/password" element={<ChangePasswordPage />} /> */}
+
+          {/* Solo STUDENT */}
+          <Route element={<RoleRoute allowedRoles={['STUDENT']} />}>
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+          </Route>
+
+          {/* Solo ADMIN */}
+          <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/reports" element={<AdminReportsPage />} />
+            {/* <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} /> */}
+            <Route path="/admin/users" element={<UsersListPage />} />
+            {/* <Route path="/admin/users/create" element={<UserForm />} /> */}
+            <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
+          </Route>
+
+        </Route>
+      </Route>
+
+      {/* Raíz: redirige según sesión/rol */}
+      <Route
+        path="/"
+        element={
+          user ? (
+            <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard'} replace />
           ) : (
             <Navigate to="/login" replace />
           )
-        } 
+        }
       />
-      
-      {/* Dashboard del Admin (placeholder por ahora) */}
-      <Route 
-        path="/admin/dashboard" 
-        element={
-          user ? (
-            user.role === 'ADMIN' ? (
-              <div className="p-8">
-                <h1 className="text-2xl font-bold">Dashboard Admin</h1>
-                <p className="text-gray-600 mt-2">Próximamente...</p>
-              </div>
-            ) : (
-              <Navigate to="/student/dashboard" replace />
-            )
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        } 
-      />
-      
-      {/* Ruta raíz: redirige según el rol */}
-      <Route 
-        path="/" 
-        element={
-          user ? (
-            user.role === 'ADMIN' ? (
-              <Navigate to="/admin/dashboard" replace />
-            ) : (
-              <Navigate to="/student/dashboard" replace />
-            )
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        } 
-      />
-      
+
       {/* Fallback */}
-      <Route 
-        path="*" 
+      <Route
+        path="*"
         element={
           user ? (
-            user.role === 'ADMIN' ? (
-              <Navigate to="/admin/dashboard" replace />
-            ) : (
-              <Navigate to="/student/dashboard" replace />
-            )
+            <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard'} replace />
           ) : (
             <Navigate to="/login" replace />
           )
-        } 
+        }
       />
     </Routes>
   )
