@@ -1,25 +1,44 @@
+import { useAuth } from '../../hooks/useAuth'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/common/Spinner'
 import StatCard from '../../components/common/StatCard'
+import LogoutButton from '../../components/common/LogoutButton'
 import { 
   FileText, Clock, CheckCircle, XCircle, 
-  TrendingUp, Award, Target, AlertCircle 
+  TrendingUp, Award, Target, AlertCircle, User
 } from 'lucide-react'
 
 const StudentDashboard = () => {
+  const { user } = useAuth()
   const { data, loading, error } = useFetch('/dashboard/stats')
 
   if (loading) return <Spinner text="Cargando tu dashboard..." />
   
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <div className="flex items-center gap-3 mb-2">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-            <h3 className="font-semibold text-red-900">Error al cargar datos</h3>
+      <div className="space-y-6">
+        {/* Header con logout incluso en error */}
+        <div className="flex justify-between items-center bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <User className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Bienvenido</p>
+              <p className="font-semibold text-gray-900">{user?.full_name || 'Estudiante'}</p>
+            </div>
           </div>
-          <p className="text-sm text-red-700">{error}</p>
+          <LogoutButton />
+        </div>
+
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+            <div className="flex items-center gap-3 mb-2">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+              <h3 className="font-semibold text-red-900">Error al cargar datos</h3>
+            </div>
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
         </div>
       </div>
     )
@@ -43,11 +62,27 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      
+      {/* ✅ HEADER CON INFO DEL USUARIO Y LOGOUT */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <User className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Bienvenido</p>
+            <p className="font-semibold text-gray-900">{user?.full_name || 'Estudiante'}</p>
+            <p className="text-xs text-gray-400">{user?.email}</p>
+          </div>
+        </div>
+        <LogoutButton />
+      </div>
+
+      {/* Banner de bienvenida */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">¡Bienvenido, Estudiante!</h1>
+            <h1 className="text-2xl font-bold">¡Hola, {user?.first_name || 'Estudiante'}!</h1>
             <p className="text-blue-100 mt-1">
               Aquí tienes un resumen de tu actividad de servicio
             </p>

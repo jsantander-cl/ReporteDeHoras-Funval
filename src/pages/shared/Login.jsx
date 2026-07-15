@@ -71,8 +71,12 @@ const Login = () => {
         <div className="p-8 sm:p-10">
           {/* Encabezado */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-4 shadow-sm">
-              <Building2 className="w-8 h-8 text-blue-600" />
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 mb-4">
+              <img 
+                src="/img/logoFunval.png" 
+                alt="Logo Funval" 
+                className="h-full w-auto object-contain" 
+              />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Funval Internacional</h1>
             <p className="text-sm text-gray-500 mt-2">Sistema de Gestión de Horas de Servicio</p>
