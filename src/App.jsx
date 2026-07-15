@@ -1,11 +1,13 @@
 //📌 Enrutador centralizado con react-router-dom y envoltura de contextos
 
-import FormularioReporte from './components/FormularioReporte';
+// (MIGUEL) import FormularioReporte from './components/FormularioReporte';
+import React from 'react';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <FormularioReporte /> {/* Esto solo es momentanio */}
+    <div>
+      <AdminDashboard />
     </div>
   );
 }
