@@ -3,6 +3,8 @@ import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGloba
 =======
 //📌 Enrutador centralizado con react-router-dom y envoltura de contextos
 
+//MIGUEL
+import UsersListPage from "./pages/admin/UsersListPage";
 // (MIGUEL) import FormularioReporte from './components/FormularioReporte';
 //(ROLANDO)
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -28,6 +30,10 @@ function App() {
   }
 
   return (
+    //MIGUEL
+    <div className="min-h-screen bg-gray-100 p-4">
+      
+      <UsersListPage></UsersListPage>
     <div className="min-h-screen bg-gray-100">
       {/* Visualizamos la pantalla de Mantenimiento Global */}
       <MantenimientoGlobal />
