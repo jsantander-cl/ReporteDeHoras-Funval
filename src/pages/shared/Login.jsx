@@ -19,7 +19,7 @@ const Login = () => {
   useEffect(() => {
     if (!isLoading && user) {
       // Determinar a dónde redirigir según el rol
-      const redirectTo = user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard'
+      const redirectTo = user.role === 'ADMIN' ? '/admin' : '/student'
       navigate(redirectTo, { replace: true })
     }
   }, [user, isLoading, navigate])
