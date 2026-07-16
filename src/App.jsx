@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Spinner from './components/common/Spinner'
 
+
 import PrivateRoute from './components/routes/PrivateRoute'
 import RoleRoute from './components/routes/RoleRoute'
 import EstructuraPrincipal from './components/design/EstructuraPrincipal'
@@ -12,14 +13,14 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import UsersListPage from './pages/admin/UsersListPage'
+import MantenimientoGlobal from "./pages/admin/mantenimientos/MantenimientoGlobal";
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
-import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
-// import ProfilePage from './pages/perfil/ProfilePage'
 // import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 
 function App() {
   const { user, isLoading } = useAuth()
+  
 
   if (isLoading) {
     return (
@@ -95,5 +96,6 @@ function App() {
     </Routes>
   )
 }
+
 
 export default App

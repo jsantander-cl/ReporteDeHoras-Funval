@@ -11,7 +11,7 @@ const BarraSuperior = ({ onMenuClick, user }) => {
         <button onClick={onMenuClick} className="md:hidden text-gray-500 hover:text-gray-700">
           <Menu className="w-6 h-6" />
         </button>
-        <span className="text-xl font-bold text-[#004B93]">EduManage</span>
+        <span className="text-xl font-bold text-[#004B93]">FUNVAL</span>
       </div>
 
       <div className="flex items-center gap-4">
