@@ -9,21 +9,24 @@ export default function ProfileModal({ isOpen, onClose }) {
     email: '',
     telefono: '',
     fechaNacimiento: '',
-    pais: ''
+    pais: 2 
   });
 
-  // NUEVO: Estados para manejar la experiencia del usuario y evitar fallos silenciosos
   const [errorMensaje, setErrorMensaje] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
+      const nombreCompleto = user.last_name 
+        ? `${user.first_name || ''} ${user.last_name}`.trim() 
+        : user.first_name || '';
+
       setFormData({
-        nombre: user.nombre || '',
+        nombre: nombreCompleto,
         email: user.email || '',
-        telefono: user.telefono || '',
-        fechaNacimiento: user.fechaNacimiento || '',
-        pais: user.pais || 'MX' 
+        telefono: user.phone_number || '',
+        fechaNacimiento: user.birthdate || '',
+        pais: user.country_id || 2 
       });
     }
   }, [user]);
@@ -37,24 +40,37 @@ export default function ProfileModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMensaje(null); // Limpiamos errores previos al intentar de nuevo
-    setIsSubmitting(true); // Bloqueamos la UI para evitar múltiples clics
+    setErrorMensaje(null);
+    setIsSubmitting(true);
+
+    const partesDelNombre = formData.nombre.trim().split(' ');
+    const primerNombre = partesDelNombre[0] || '';
+    const apellidos = partesDelNombre.slice(1).join(' ');
+
+    const payload = {
+      first_name: primerNombre,
+      email: formData.email,
+      phone_number: formData.telefono,
+      birthdate: formData.fechaNacimiento,
+      country_id: parseInt(formData.pais)
+    };
+
+    if (apellidos) {
+      payload.last_name = apellidos;
+    }
 
     try {
-      // Llamamos a tu contexto
-      const result = await updateProfile(formData);
+      const result = await updateProfile(payload);
       
       if (result && result.success) {
-        onClose(); // Éxito: cerramos el modal
+        onClose();
       } else {
-        // Fallo manejado por el backend
-        setErrorMensaje("No se pudieron guardar los cambios. Revisa los datos e intenta de nuevo.");
+        setErrorMensaje("Datos rechazados por el servidor. Revisa el formato.");
       }
     } catch (error) {
-      // Fallo de red o servidor caído
-      setErrorMensaje("Ocurrió un error inesperado al contactar al servidor.");
+      setErrorMensaje("Error de conexión.");
     } finally {
-      setIsSubmitting(false); // Siempre desbloqueamos el botón al terminar
+      setIsSubmitting(false);
     }
   };
 
@@ -77,7 +93,6 @@ export default function ProfileModal({ isOpen, onClose }) {
 
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
           
-          {/* NUEVO: Renderizado condicional del mensaje de error */}
           {errorMensaje && (
             <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium border border-red-200">
               {errorMensaje}
@@ -85,7 +100,7 @@ export default function ProfileModal({ isOpen, onClose }) {
           )}
           
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre Completo</label>
             <input 
               name="nombre"
               className="w-full p-2.5 rounded-lg border border-gray-300 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
@@ -93,6 +108,7 @@ export default function ProfileModal({ isOpen, onClose }) {
               value={formData.nombre}
               onChange={handleChange}
               disabled={isSubmitting}
+              required
             />
           </div>
 
@@ -105,6 +121,7 @@ export default function ProfileModal({ isOpen, onClose }) {
               value={formData.email}
               onChange={handleChange}
               disabled={isSubmitting}
+              required
             />
           </div>
 
@@ -141,11 +158,11 @@ export default function ProfileModal({ isOpen, onClose }) {
               disabled={isSubmitting}
               className="w-full p-2.5 rounded-lg border border-gray-300 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              <option value="PE">Perú</option>
-              <option value="MX">México</option>
-              <option value="CO">Colombia</option>
-              <option value="CL">Chile</option>
-              <option value="AR">Argentina</option>
+              <option value="1">Perú</option>
+              <option value="2">México</option>
+              <option value="3">Colombia</option>
+              <option value="4">Chile</option>
+              <option value="5">Argentina</option>
             </select>
           </div>
 
