@@ -196,7 +196,7 @@ export default function FormularioReporte() {
                 />
               </div>
 
-              {/* SELECT DE CARRERA INTEGRADO*/}
+              {/* SELECT DE CARRERA INTEGRADOS*/}
               <div>
                 <label className="block text-xs font-semibold text-blue-900 mb-1">Carrera</label>
                 <select 
