@@ -15,10 +15,6 @@ import AdminReportsPage from './pages/admin/AdminReportsPage'
 import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
 import FormularioReporte from './components/FormularioReporte'
-<<<<<<< HEAD
-
-=======
->>>>>>> dac4a32bc0bf3340f28574404523b47c64e3d38e
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 // import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
