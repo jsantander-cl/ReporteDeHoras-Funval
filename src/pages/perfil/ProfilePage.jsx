@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from "../../context/AuthContext";
+import { Link } from 'react-router-dom'; // CORREGIDO: Importación correcta para navegación
 
 export default function ProfileModal({ isOpen, onClose }) {
   const { user, updateProfile } = useContext(AuthContext);
@@ -164,6 +165,14 @@ export default function ProfileModal({ isOpen, onClose }) {
               <option value="4">Chile</option>
               <option value="5">Argentina</option>
             </select>
+            
+            <Link
+  to="/cambiar-contrasena" 
+  onClick={onClose} 
+  className="text-xs text-blue-600 hover:underline mt-2 font-medium transition-colors"
+>
+  ¿Necesitas cambiar tu contraseña?
+</Link>
           </div>
 
           <div className="flex gap-3 mt-4">
