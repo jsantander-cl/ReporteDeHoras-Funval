@@ -68,19 +68,33 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const updateProfile = async (formData) => {
+  const updateProfile = async (datosTraducidos) => {
     try {
-      await api.put('/profile/me', formData)
-      await refreshUser()
+      await api.patch('/profile/me', datosTraducidos)
+      
+      setUser(prevUser => {
+        if (!prevUser) return prevUser; 
+
+        return {
+          ...prevUser,
+          first_name: datosTraducidos.first_name,
+          last_name: datosTraducidos.last_name !== undefined ? datosTraducidos.last_name : prevUser.last_name,
+          email: datosTraducidos.email,
+          phone_number: datosTraducidos.phone_number,
+          birthdate: datosTraducidos.birthdate,
+          country_id: datosTraducidos.country_id
+        };
+      });
+
       return { success: true }
     } catch (error) {
-      console.error('Error actualizando el perfil:', error)
+      console.error('Error actualizando el perfil:', error.response?.data)
       return { success: false }
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
