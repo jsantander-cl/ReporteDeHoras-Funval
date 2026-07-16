@@ -13,6 +13,8 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import UsersListPage from './pages/admin/UsersListPage'
+import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
+import FormularioReporte from './components/FormularioReporte'
 import MantenimientoGlobal from "./pages/admin/mantenimientos/MantenimientoGlobal";
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
@@ -55,6 +57,9 @@ function App() {
           {/* Solo STUDENT */}
           <Route element={<RoleRoute allowedRoles={['STUDENT']} />}>
             <Route path="/student/dashboard" element={<StudentDashboard />} />
+            
+            {/* ruta del formulario aquí */}
+            <Route path="/student/reports/new" element={<FormularioReporte />} />
           </Route>
 
           {/* Solo ADMIN */}

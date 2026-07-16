@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/common/Spinner'
@@ -51,12 +51,13 @@ const StudentDashboard = () => {
           <p className="text-gray-500 text-sm mt-1">Aquí tienes un resumen de tu actividad de servicio.</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => navigate('/student/reports/new')}
-            className="flex items-center gap-2 bg-[#004B93] hover:bg-[#003870] text-white px-4 py-2.5 rounded-xl text-sm font-semibold"
+          {/* Botón de Enviar Reporte transformado en Link */}
+          <Link
+            to="/student/reports/new"
+            className="flex items-center gap-2 bg-[#004B93] hover:bg-[#003870] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors inline-flex"
           >
             <Plus className="w-4 h-4" /> Enviar Nuevo Reporte
-          </button>
+          </Link>
           <button
             onClick={() => navigate('/student/reports')}
             className="flex items-center gap-2 border border-[#004B93] text-[#004B93] px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-50"
