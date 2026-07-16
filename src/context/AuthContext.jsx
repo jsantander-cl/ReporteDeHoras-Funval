@@ -75,6 +75,17 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const updateProfile = async (formData) => {
+    try {
+      await api.put('/profile/me', formData)
+      await refreshUser()
+      return { success: true }
+    } catch (error) {
+      console.error('Error actualizando el perfil:', error)
+      return { success: false }
+    }
+  }
+
   return (
     <AuthContext.Provider value={{ 
       user, 

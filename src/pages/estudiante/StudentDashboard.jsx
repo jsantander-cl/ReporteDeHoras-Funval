@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 export default function StudentDashboard() {
 
   const [activeTab, setActiveTab] = useState('Home');
+  const { user } = useContext(AuthContext); // Obtenemos el usuario del estado global
 
   return (
     <div className="bg-slate-50 text-blue-800 mb-24 md:mb-0 min-h-screen relative font-sans">
@@ -37,7 +39,8 @@ export default function StudentDashboard() {
         <section className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="animate-in fade-in slide-in-from-left duration-700">
             <h2 className="text-3xl md:text-4xl font-bold text-blue-800">
-              Hola, Carlos Eduardo
+              {/* Mostramos dinámicamente el nombre o un valor por defecto */}
+              Hola, {user?.nombre || 'Pame'}
             </h2>
             <p className="text-lg text-slate-600 mt-2">
               Aquí puedes reportar tus horas de servicio.

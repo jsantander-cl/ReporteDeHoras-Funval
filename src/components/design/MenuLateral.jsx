@@ -2,9 +2,8 @@
 //📌 Tarea 5: Sidebar con navegación dinámica según rol
 
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, FileText, Users, Settings } from 'lucide-react'
+import { LayoutDashboard, FileText, Users, Settings, User } from 'lucide-react'
 
-// Enlaces por rol. Si mañana se agrega un rol nuevo, solo se toca este arreglo.
 const ADMIN_LINKS = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/reports', label: 'Reports', icon: FileText },
@@ -17,12 +16,11 @@ const STUDENT_LINKS = [
   { to: '/student/reports', label: 'Mis Reportes', icon: FileText },
 ]
 
-const MenuLateral = ({ user, isOpen = true, onClose }) => {
+const MenuLateral = ({ user, isOpen = true, onClose, onOpenProfile }) => {
   const links = user?.role === 'ADMIN' ? ADMIN_LINKS : STUDENT_LINKS
 
   return (
     <>
-      {/* Overlay para móvil */}
       <div
         className={`fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -49,6 +47,8 @@ const MenuLateral = ({ user, isOpen = true, onClose }) => {
           </div>
 
           <nav className="flex flex-col gap-1">
+            
+            {/* === RUTAS DE NAVEGACIÓN === */}
             {links.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -66,6 +66,20 @@ const MenuLateral = ({ user, isOpen = true, onClose }) => {
                 {label}
               </NavLink>
             ))}
+
+            {/* === BOTÓN DE PERFIL (AGREGADO) === */}
+            {user?.role !== 'ADMIN' && (
+              <button
+                onClick={() => {
+                  onOpenProfile(); 
+                  if (window.innerWidth < 768) onClose(); 
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-gray-500 hover:bg-[#E6F0FA] hover:text-[#004B93] hover:font-semibold text-left w-full"              >
+                <User className="w-5 h-5" />
+                Perfil
+              </button>
+            )}
+
           </nav>
         </div>
 
