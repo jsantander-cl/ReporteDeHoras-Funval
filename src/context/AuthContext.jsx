@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useRef } from 'react'
+import { createContext, useState, useEffect, useRef, useContext } from 'react'
 import api from '../services/api'
 
 export const AuthContext = createContext(null)
@@ -6,10 +6,12 @@ export const AuthContext = createContext(null)
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const hasCheckedAuth = useRef(false) // ✅ Previene doble ejecución en StrictMode
+  const hasCheckedAuth = useRef(false)
+
+  const isAuthenticated = !!user;
+  const role = user?.role || null; 
 
   useEffect(() => {
-    // ✅ Solo ejecutar una vez, incluso en React StrictMode
     if (hasCheckedAuth.current) return
     hasCheckedAuth.current = true
     
@@ -21,7 +23,6 @@ export const AuthProvider = ({ children }) => {
       const { data } = await api.get('/profile/me')
       setUser(data)
     } catch (error) {
-      // ✅ Silenciar el 401 (es esperado cuando no hay sesión)
       if (error.response?.status !== 401) {
         console.error('Error verificando auth:', error)
       }
@@ -29,6 +30,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Limpia el estado del usuario en React de inmediato y redirige al login.
+  const handleAuthError = () => {
+    setUser(null)
+    window.location.href = '/login'
   }
 
   const login = async (email, password) => {
@@ -69,8 +76,25 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated, 
+      role, 
+      isLoading, 
+      login, 
+      logout, 
+      refreshUser,
+      handleAuthError 
+    }}>
       {children}
     </AuthContext.Provider>
   )
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de un AuthProvider')
+  }
+  return context
 }
