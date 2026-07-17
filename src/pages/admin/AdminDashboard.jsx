@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const totalUsuarios = (usuarios.total_students || 0) + (usuarios.total_admins || 0)
   const totalReportes = reportes.total ?? '—'
 
-  // Para cursos y categorías, asumimos que vienen como arreglo (puede que tengan paginación)
+  // Para cursos y categorías
   const cursos = Array.isArray(coursesData) ? coursesData : coursesData?.items || coursesData?.data || []
   const categorias = Array.isArray(categoriesData) ? categoriesData : categoriesData?.items || categoriesData?.data || []
 

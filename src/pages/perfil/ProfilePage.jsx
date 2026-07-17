@@ -16,6 +16,7 @@ export default function ProfileModal({ isOpen, onClose }) {
   const [errorMensaje, setErrorMensaje] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  //Puente de datos entre user y form (en el setFormData)
   useEffect(() => {
     if (user) {
       const nombreCompleto = user.last_name 
@@ -74,7 +75,8 @@ export default function ProfileModal({ isOpen, onClose }) {
       setIsSubmitting(false);
     }
   };
-
+  
+//Previene el renderizado del modal si no está abierto
   if (!isOpen) return null;
 
   return (

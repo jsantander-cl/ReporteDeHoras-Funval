@@ -20,7 +20,7 @@ export default function CountriesCrud() {
   // Modal y formulario
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCountry, setEditingCountry] = useState(null)
-  const [formData, setFormData] = useState({ name: '', code: '' }) // ✅ antes era iso_code
+  const [formData, setFormData] = useState({ name: '', code: '' }) 
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState(null)
 
@@ -30,15 +30,17 @@ export default function CountriesCrud() {
 
   useEffect(() => {
     fetchCountries()
-  }, [page])
+  }, [page]) //Escucha el cambio en la variable page (paginación)
 
+  // Abre el modal si la URL contiene ?new=1 y limpia la dirección para evitar reaperturas
   useEffect(() => {
     if (searchParams.get('new') === '1') {
       openCreateModal()
       setSearchParams({}, { replace: true })
     }
-  }, [])
+  }, []) 
 
+  // Obtiene la lista paginada de países del servidor.
   const fetchCountries = async () => {
     setLoading(true)
     setError(null)
@@ -53,41 +55,48 @@ export default function CountriesCrud() {
       setLoading(false)
     }
   }
-
+  
+  // Prepara el formulario y abre el modal en modo "Creación"
   const openCreateModal = () => {
     setEditingCountry(null)
-    setFormData({ name: '', code: '' }) // ✅ reset con code
+    setFormData({ name: '', code: '' }) 
     setFormError(null)
     setModalOpen(true)
   }
 
+  // Carga los datos del país seleccionado en el formulario y abre el modal en modo "Edición"
   const openEditModal = (country) => {
     setEditingCountry(country)
-    setFormData({ name: country.name, code: country.code }) // ✅ usa code
+    setFormData({ name: country.name, code: country.code }) 
     setFormError(null)
     setModalOpen(true)
   }
 
+  // Cierra el modal y restablece los estados de edición y errores.
   const closeModal = () => {
     setModalOpen(false)
     setEditingCountry(null)
     setFormError(null)
   }
 
+  // Manejador para actualizar el estado del formulario dinámicamente.
   const handleFormChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  // Previene la recarga del navegador
   const handleFormSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     setFormError(null)
 
+    // Prepara el payload: limpia espacios y normaliza el código ISO a mayúsculas.
     const payload = {
       name: formData.name.trim(),
-      code: formData.code.trim().toUpperCase(), // ✅ enviamos code, no iso_code
+      code: formData.code.trim().toUpperCase(), 
     }
 
+    // Ejecuta la petición al servidor (POST/PATCH), maneja errores dinámicos y restaura el estado.
     try {
       if (editingCountry) {
         await api.patch(`/countries/${editingCountry.id}`, payload)
@@ -107,6 +116,7 @@ export default function CountriesCrud() {
     }
   }
 
+  // Ejecuta la eliminación del país seleccionado y actualiza la lista global.
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
@@ -220,11 +230,11 @@ export default function CountriesCrud() {
                 </label>
                 <input
                   type="text"
-                  name="code" // ✅ antes era iso_code
+                  name="code" 
                   value={formData.code}
                   onChange={handleFormChange}
                   required
-                  maxLength={2} // ✅ solo 2 caracteres
+                  maxLength={2} 
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#004B93]/20 uppercase"
                   placeholder="Ej. MX"
                 />

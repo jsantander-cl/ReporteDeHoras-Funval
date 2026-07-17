@@ -31,6 +31,8 @@ const EstructuraPrincipal = () => {
       </div>
 
       {/* === MODAL DE PERFIL === */}
+      {/* Renderiza el modal de edición;  persistencia de cambios mediante la función onSave asíncrona  */}
+      
       <ProfilePage 
         isOpen={isProfileOpen} 
         onClose={() => setIsProfileOpen(false)}
