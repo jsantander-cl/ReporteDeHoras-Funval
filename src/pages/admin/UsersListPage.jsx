@@ -1,20 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form' // 👈 Importar para el formulario
-import { Search, Filter, Upload, Pencil, Trash2, Plus } from 'lucide-react'
-import toast from 'react-hot-toast' // 👈 Para notificaciones
+import { useForm } from 'react-hook-form'
+import { Search, Filter, Upload, Pencil, Trash2, Plus, UserPlus, Download } from 'lucide-react'
+import toast from 'react-hot-toast'
 
-import { Search, Filter, Upload, UserPlus, Pencil, Trash2, Download } from 'lucide-react'
 import ModalConfirm from '../../components/ui/ModalConfirm'
 import Pagination from '../../components/ui/Pagination'
 import Spinner from '../../components/common/Spinner'
 import { useFetch } from '../../hooks/useFetch'
-import api from '../../services/api' // 👈 Usar api en lugar de fetch para mantener las cookies
+import api from '../../services/api'
 
 import Input from '../../components/common/Input'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
-import api from '../../services/api'
+
 
 export default function UsersListPage() {
   const navigate = useNavigate()
@@ -46,14 +45,14 @@ export default function UsersListPage() {
   const countries = countriesData || []
   const courses = coursesData || []
 
-  // Debounce del input de búsqueda
   // Estados para importación CSV
-  const [importResult, setImportResult] = useState(null) // { created, skipped, error? }
+  const [importResult, setImportResult] = useState(null) // { created, skipped, errors }
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState(null)
 
   const fileInputRef = useRef(null)
 
+  // Debounce del input de búsqueda
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
     return () => clearTimeout(timer)
@@ -67,10 +66,6 @@ export default function UsersListPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const fileInputRef = useRef(null)
-
-  const users = data?.items || data?.data || data || []
-  const totalUsers = data?.total || users.length
 
   // --- FUNCIONES DEL MODAL DE CREACIÓN ---
   const openModal = () => {
@@ -112,11 +107,11 @@ export default function UsersListPage() {
       toast.success('Usuario creado correctamente')
       closeModal()
       setReloadFlag(prev => prev + 1) // Recargar la lista
-      
+
     } catch (err) {
       const detail = err.response?.data?.detail
-      const errorMsg = Array.isArray(detail) 
-        ? detail.map(d => `${d.loc?.join('.')}: ${d.msg}`).join(' | ') 
+      const errorMsg = Array.isArray(detail)
+        ? detail.map(d => `${d.loc?.join('.')}: ${d.msg}`).join(' | ')
         : (typeof detail === 'string' ? detail : 'Error al crear el usuario')
       toast.error(errorMsg, { duration: 8000 })
     }
@@ -138,38 +133,19 @@ export default function UsersListPage() {
       // Usamos api en lugar de fetch para mantener la cookie de sesión
       await api.delete(`/users/${selectedUser.id}`)
       toast.success('Usuario eliminado correctamente')
-      await api.delete(`/users/${selectedUser.id}`)
       setIsDeleteModalOpen(false)
       setSelectedUser(null)
       setReloadFlag(prev => prev + 1)
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Error al eliminar usuario')
       const detail = err.response?.data?.detail
       const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : detail
-      alert(msg || 'Error al eliminar usuario')
+      toast.error(msg || 'Error al eliminar usuario')
     } finally {
       setDeleting(false)
     }
   }
 
   // --- IMPORTACIÓN CSV ---
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      
-      const response = await api.post('/users/bulk', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      
-      toast.success(`Importación exitosa: ${response.data.created} creados, ${response.data.skipped} omitidos`)
-      setImportedFileName('')
-      setReloadFlag(prev => prev + 1)
-    } catch (err) {
-      toast.error('Error al importar el archivo CSV')
   // 📤 Procesar archivo CSV seleccionado
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
@@ -205,9 +181,6 @@ export default function UsersListPage() {
       // Resetear el input para permitir volver a seleccionar el mismo archivo
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
-    
-    // Limpiar el input para permitir seleccionar el mismo archivo de nuevo
-    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   // --- HELPERS ---
@@ -228,7 +201,7 @@ export default function UsersListPage() {
     URL.revokeObjectURL(url)
   }
 
-  // Helpers para formatear datos (sin cambios)
+  // Helpers para formatear datos
   const getInitials = (fullName) => {
     if (!fullName) return '?'
     return fullName.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
@@ -255,8 +228,6 @@ export default function UsersListPage() {
       Error al cargar usuarios: {error}
     </div>
   )
-  if (loading) return <Spinner text="Cargando usuarios..." />
-  if (error) return <div className="max-w-6xl mx-auto py-8 text-center text-red-500 font-bold">Error al cargar usuarios: {error}</div>
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
@@ -267,16 +238,15 @@ export default function UsersListPage() {
           <p className="text-slate-500 text-sm mt-1">Administra y organiza los accesos de la plataforma institucional.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept=".csv" 
-            className="hidden" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".csv"
+            className="hidden"
           />
           <button
             onClick={() => fileInputRef.current.click()}
-            className="border border-[#004B93] text-[#004B93] px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50 transition-colors"
             disabled={importing}
             className="border border-[#004B93] text-[#004B93] px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50 disabled:opacity-50"
           >
@@ -294,14 +264,6 @@ export default function UsersListPage() {
         </div>
       </section>
 
-      {importedFileName && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center justify-between">
-          Archivo seleccionado: <strong>{importedFileName}</strong>
-          <button onClick={() => setImportedFileName('')} className="text-emerald-500 hover:text-emerald-800">Descartar</button>
-        </div>
-      )}
-
-      {/* Barra de búsqueda */}
       {/* Banner de resultado de importación */}
       {(importResult || importError) && (
         <div className={`text-xs font-semibold px-4 py-3 rounded-xl flex items-center justify-between ${
@@ -337,7 +299,7 @@ export default function UsersListPage() {
         </button>
       </section>
 
-      {/* Lista de usuarios (sin cambios) */}
+      {/* Lista de usuarios */}
       <div className="flex flex-col gap-3">
         {users.length > 0 ? (
           users.map((user) => {
@@ -377,14 +339,14 @@ export default function UsersListPage() {
                 </div>
                 <div className="md:col-span-2 text-slate-400 text-xs font-semibold">Reg: {regDate}</div>
                 <div className="md:col-span-1 flex justify-end gap-2">
-                  <button 
+                  <button
                     onClick={() => navigate(`/admin/users/${user.id}/edit`, { state: { user } })}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#004B93] hover:bg-slate-100 transition-colors"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button 
-                    onClick={() => triggerDelete(user)} 
+                  <button
+                    onClick={() => triggerDelete(user)}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -419,10 +381,10 @@ export default function UsersListPage() {
         loading={deleting}
       />
 
-      {/* 👇 MODAL DE CREACIÓN DE USUARIO INTEGRADO 👇 */}
+      {/* 👇 MODAL DE CREACIÓN DE USUARIO 👇 */}
       <Modal isOpen={isModalOpen} onClose={closeModal} title="Nuevo Usuario" size="lg">
         <form onSubmit={handleSubmit(handleCreate)} className="space-y-4">
-          
+
           {/* Nombres */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Nombre *" {...register('first_name', { required: 'Obligatorio' })} error={errors.first_name?.message} />
@@ -433,19 +395,19 @@ export default function UsersListPage() {
 
           {/* Datos principales */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input 
-              label="Email (@funval.com) *" 
+            <Input
+              label="Email (@funval.com) *"
               type="email"
-              {...register('email', { 
+              {...register('email', {
                 required: 'Obligatorio',
                 pattern: { value: /^[A-Z0-9._%+-]+@funval\.com$/i, message: 'Debe ser @funval.com' }
-              })} 
-              error={errors.email?.message} 
+              })}
+              error={errors.email?.message}
             />
-            <Input 
-              label="Documento / Cédula *" 
-              {...register('document_number', { required: 'Obligatorio' })} 
-              error={errors.document_number?.message} 
+            <Input
+              label="Documento / Cédula *"
+              {...register('document_number', { required: 'Obligatorio' })}
+              error={errors.document_number?.message}
             />
           </div>
 
@@ -458,7 +420,7 @@ export default function UsersListPage() {
                 <option value="ADMIN">ADMIN</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
               <select {...register('country_id')} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">

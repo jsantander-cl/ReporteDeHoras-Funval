@@ -160,10 +160,7 @@ const InDebtStudentsPage = () => {
             Filtrar
             {hasActiveFilters && <span className="w-2 h-2 bg-[#004B93] rounded-full"></span>}
           </button>
-          <button className="flex-1 md:flex-none bg-[#004B93] hover:bg-[#003870] text-white px-4 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-sm">
-            <Download className="w-4 h-4" />
-            Exportar
-          </button>
+          
 
           {/* Menú flotante de filtros */}
           {isFilterOpen && (

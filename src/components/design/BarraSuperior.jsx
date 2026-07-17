@@ -1,7 +1,7 @@
 //📂 FASE 2: COMPONENTES COMPARTIDOS DE INTERFAZ
 //📌 Tarea 3: Botón funcional de Logout en Navbar
 
-import { Menu, Search } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import LogoutButton from '../common/LogoutButton'
 
 const BarraSuperior = ({ onMenuClick, user }) => {
@@ -21,7 +21,7 @@ const BarraSuperior = ({ onMenuClick, user }) => {
           {user?.full_name || user?.email}
         </span>
 
-        <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xs font-bold text-[#004B93]">
+        <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xl font-bold text-[#004B93]">
           {user?.first_name?.[0] || 'U'}
         </div>
 

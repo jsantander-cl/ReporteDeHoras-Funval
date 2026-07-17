@@ -101,7 +101,7 @@ const MyReports = () => {
                             <FileText className="w-4 h-4" /> <span className="text-xs">PDF</span>
                           </button>
                           <button
-                          <button 
+                           
                             onClick={() => navigate(`/student/reports/${r.id}/edit`, { state: { report: r } })}
                             className="flex items-center gap-1 text-slate-600 hover:text-primary transition-colors font-medium"
                           >
