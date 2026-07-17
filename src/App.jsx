@@ -89,7 +89,7 @@ function App() {
             <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
-            <Route path="/admin/maintenance/categoriescrud" element={<CategoriesCrud />}/> 
+            <Route path="/admin/maintenance/categories" element={<CategoriesCrud />} />
             <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
             <Route path="/admin/maintenance/countries" element={<CountriesCrud />} />
             <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />
