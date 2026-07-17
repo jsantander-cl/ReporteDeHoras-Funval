@@ -23,6 +23,7 @@ import FormularioReporte from './components/FormularioReporte'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 // import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
+import UserEditPage from './components/ui/UserEditPage'
 
 function App() {
   const { user, isLoading } = useAuth()
@@ -78,6 +79,7 @@ function App() {
             <Route path="/admin/reports" element={<AdminReportsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
+            <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
           </Route>
 
         </Route>

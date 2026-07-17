@@ -1,54 +1,111 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Filter, Upload, UserPlus, Pencil, Trash2 } from 'lucide-react'
 import ModalConfirm from '../../components/ui/ModalConfirm'
 import Pagination from '../../components/ui/Pagination'
+import Spinner from '../../components/common/Spinner'
+import { useFetch } from '../../hooks/useFetch'
 
-// Tarea 22/25: Listado de Usuarios (paginado real vendrá de GET /users/?page=&page_size=)
-// NOTA: mientras se conecta la API, se deja el mock para no romper la UI ya construida.
 export default function UsersListPage() {
   const navigate = useNavigate()
 
-  const [users, setUsers] = useState([
-    { id: 1, initials: 'JD', name: 'Javier Delgado', email: 'javier.delgado@edumanage.edu', role: 'ADMIN', status: 'Activo', regDate: '12 Oct 2023' },
-    { id: 2, initials: 'MR', name: 'Mariana Rojas', email: 'm.rojas_stud@edumanage.edu', role: 'STUDENT', status: 'Inactivo', regDate: '05 Jan 2024' },
-    { id: 3, initials: 'CA', name: 'Carlos Arrieta', email: 'c.arrieta@edumanage.edu', role: 'STUDENT', status: 'Activo', regDate: '18 Jan 2024' },
-    { id: 4, initials: 'SG', name: 'Sofia Garcia', email: 'sofia.g@edumanage.edu', role: 'STUDENT', status: 'Activo', regDate: '02 Feb 2024' },
-  ])
-
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [importedFileName, setImportedFileName] = useState('')
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
-  const pageSize = 4
+  const pageSize = 10
+  const [reloadFlag, setReloadFlag] = useState(0) // para forzar refetch después de eliminar
+
+  // Debounce del input de búsqueda (espera 300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Llamada a la API con parámetros de paginación, búsqueda y flag de recarga
+  const url = `/users/?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(debouncedSearch)}&_=${reloadFlag}`
+  const { data, loading, error } = useFetch(url)
+
+  const [importedFileName, setImportedFileName] = useState('')
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const fileInputRef = useRef(null)
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setImportedFileName(file.name)
-      // TODO: POST /users/bulk (Tarea 24)
-    }
-  }
+  // Procesar respuesta de la API (paginada)
+  const users = data?.items || data?.data || data || []
+  const totalUsers = data?.total || users.length
 
+  // Función para eliminar usuario
   const triggerDelete = (user) => {
     setSelectedUser(user)
     setIsDeleteModalOpen(true)
   }
 
-  const confirmDelete = () => {
-    // TODO: DELETE /users/{id} -> soft delete real (Tarea 25)
-    setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id))
-    setIsDeleteModalOpen(false)
-    setSelectedUser(null)
+  const confirmDelete = async () => {
+    if (!selectedUser) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/v1/users/${selectedUser.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.detail || 'Error al eliminar usuario')
+      }
+      setIsDeleteModalOpen(false)
+      setSelectedUser(null)
+      setReloadFlag(prev => prev + 1) // recarga la lista
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  // Manejar importación de CSV (placeholder)
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setImportedFileName(file.name)
+      // TODO: POST /users/bulk
+    }
+  }
+
+  // Helpers para formatear datos
+  const getInitials = (fullName) => {
+    if (!fullName) return '?'
+    return fullName
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '—'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+    } catch {
+      return dateString.slice(0, 10)
+    }
+  }
+
+  const getUserStatus = (user) => {
+    // Posibles campos: is_active (booleano) o status (string)
+    if (typeof user.is_active === 'boolean') return user.is_active ? 'Activo' : 'Inactivo'
+    if (user.status) return user.status === 'active' ? 'Activo' : 'Inactivo'
+    return 'Activo' // por defecto
+  }
+
+  // Vista mientras carga
+  if (loading) return <Spinner text="Cargando usuarios..." />
+
+  // Vista de error
+  if (error) return (
+    <div className="max-w-6xl mx-auto py-8 text-center text-red-500 font-bold">
+      Error al cargar usuarios: {error}
+    </div>
   )
 
   return (
@@ -88,7 +145,7 @@ export default function UsersListPage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }} // reset a primera página al buscar
             placeholder="Buscar por nombre o email..."
             className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-[#004B93]/20 text-sm shadow-sm"
           />
@@ -98,62 +155,79 @@ export default function UsersListPage() {
         </button>
       </section>
 
+      {/* Lista de usuarios */}
       <div className="flex flex-col gap-3">
-        {filteredUsers.map((user) => (
-          <div
-            key={user.id}
-            className={`bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 shadow-sm ${
-              user.status === 'Inactivo' ? 'opacity-70' : ''
-            }`}
-          >
-            <div className="md:col-span-5 flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base ${
-                user.role === 'ADMIN' ? 'bg-[#E6F0FA] text-[#004B93]' : 'bg-[#F1F5F9] text-slate-500'
-              }`}>
-                {user.initials}
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-700 text-sm">{user.name}</h3>
-                <p className="text-slate-400 text-xs mt-0.5">{user.email}</p>
-              </div>
-            </div>
-            <div className="md:col-span-2">
-              <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-extrabold ${
-                user.role === 'ADMIN' ? 'bg-[#E6F0FA] text-[#004B93]' : 'bg-[#F1F5F9] text-slate-500'
-              }`}>{user.role}</span>
-            </div>
-            <div className="md:col-span-2 flex items-center gap-2 text-xs font-semibold text-slate-600">
-              <span className={`w-2 h-2 rounded-full ${user.status === 'Activo' ? 'bg-[#10B981]' : 'bg-slate-400'}`}></span>
-              {user.status}
-            </div>
-            <div className="md:col-span-2 text-slate-400 text-xs font-semibold">Reg: {user.regDate}</div>
-            <div className="md:col-span-1 flex justify-end gap-2">
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#004B93] hover:bg-slate-100">
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button onClick={() => triggerDelete(user)} className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
+        {users.length > 0 ? (
+          users.map((user) => {
+            const status = getUserStatus(user)
+            const initials = getInitials(user.full_name || user.name)
+            const name = user.full_name || user.name || 'Sin nombre'
+            const email = user.email || '—'
+            const role = user.role || 'STUDENT'
+            const regDate = formatDate(user.created_at || user.registration_date)
 
-        {filteredUsers.length === 0 && (
+            return (
+              <div
+                key={user.id}
+                className={`bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 shadow-sm ${
+                  status === 'Inactivo' ? 'opacity-70' : ''
+                }`}
+              >
+                <div className="md:col-span-5 flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base ${
+                    role === 'ADMIN' ? 'bg-[#E6F0FA] text-[#004B93]' : 'bg-[#F1F5F9] text-slate-500'
+                  }`}>
+                    {initials}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-700 text-sm">{name}</h3>
+                    <p className="text-slate-400 text-xs mt-0.5">{email}</p>
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-extrabold ${
+                    role === 'ADMIN' ? 'bg-[#E6F0FA] text-[#004B93]' : 'bg-[#F1F5F9] text-slate-500'
+                  }`}>{role}</span>
+                </div>
+                <div className="md:col-span-2 flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <span className={`w-2 h-2 rounded-full ${status === 'Activo' ? 'bg-[#10B981]' : 'bg-slate-400'}`}></span>
+                  {status}
+                </div>
+                <div className="md:col-span-2 text-slate-400 text-xs font-semibold">Reg: {regDate}</div>
+                <div className="md:col-span-1 flex justify-end gap-2">
+                  <button onClick={() => navigate(`/admin/users/${user.id}/edit`, { state: { user } })}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#004B93] hover:bg-slate-100">
+                    <Pencil className="w-4 h-4" /></button>
+                  <button onClick={() => triggerDelete(user)} className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )
+          })
+        ) : (
           <div className="py-12 text-center text-slate-400 bg-white rounded-xl shadow-sm border border-slate-200">
-            Ningún usuario coincide con los filtros aplicados.
+            No se encontraron usuarios.
           </div>
         )}
       </div>
 
-      <Pagination page={page} pageSize={pageSize} total={filteredUsers.length} onPageChange={setPage} />
+      {/* Paginación con total real */}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={totalUsers}
+        onPageChange={setPage}
+      />
 
       <ModalConfirm
         isOpen={isDeleteModalOpen}
         title="¿Eliminar Usuario?"
-        message={selectedUser && `¿Estás seguro de que deseas eliminar a ${selectedUser.name}? Esta acción no se puede deshacer.`}
+        message={selectedUser && `¿Estás seguro de que deseas eliminar a ${selectedUser.full_name || selectedUser.name}? Esta acción no se puede deshacer.`}
         confirmLabel="Sí, Eliminar Usuario"
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
+        loading={deleting}
       />
     </div>
   )
