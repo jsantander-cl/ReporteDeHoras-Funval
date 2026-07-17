@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import BadgeStatus from '../../components/ui/BadgeStatus'
 import Pagination from '../../components/ui/Pagination'
@@ -7,19 +7,57 @@ import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/common/Spinner'
 
 export default function AdminReportsPage() {
-  const { data: reportsData, loading: loadingReports, error: errorReports } = useFetch('/reports/')
-  const { data: statusesData } = useFetch('/enums/report-statuses')
-
+  // Estado para filtros y paginación
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(1)
   const pageSize = 10
 
+  // Construir URL con parámetros dinámicos
+  const url = useMemo(() => {
+    const params = new URLSearchParams({ page, page_size: pageSize })
+    if (statusFilter !== 'ALL') params.append('status', statusFilter)
+    // Si en el futuro implementas filtro por estudiante vía ID, añade:
+    // if (selectedStudentId) params.append('student_id', selectedStudentId)
+    return `/reports/?${params.toString()}`
+  }, [page, pageSize, statusFilter])
+
+  const { data: reportsData, loading: loadingReports, error: errorReports } = useFetch(url)
+  const { data: statusesData } = useFetch('/enums/report-statuses')
+
   const [reporteSeleccionado, setReporteSeleccionado] = useState(null)
 
   const reports = reportsData?.items || reportsData || []
-  const statuses = statusesData || []
+  const totalReports = reportsData?.total ?? 0
 
+  // Normalizar los posibles formatos del enum de estados
+  const statuses = (() => {
+    if (!statusesData) return [
+      { value: 'APPROVED_FULL', label: 'Aprobados' },
+      { value: 'APPROVED_PARTIAL', label: 'Aprobados Parcial' },
+      { value: 'PENDING', label: 'Pendientes' },
+      { value: 'REJECTED', label: 'Rechazados' }
+    ]
+    if (Array.isArray(statusesData) && typeof statusesData[0] === 'string') {
+      return statusesData.map(s => ({ value: s, label: s }))
+    }
+    if (Array.isArray(statusesData)) {
+      return statusesData.map(s => ({
+        value: s.value || s.name,
+        label: s.label || s.name || s.value
+      }))
+    }
+    if (statusesData.items) {
+      return statusesData.items.map(s => ({
+        value: s.value || s.name,
+        label: s.label || s.name || s.value
+      }))
+    }
+    return statusesData
+  })()
+
+  // El filtro por búsqueda se mantiene en el cliente porque el API no expone búsqueda por texto.
+  // Si el backend soportara un parámetro 'search', podríamos agregarlo a la URL.
   const filteredReports = reports.filter((r) => {
     const rawStudent = r.student?.first_name || r.student?.full_name || r.student
     const rawCategory = r.category?.name || r.category
@@ -31,10 +69,14 @@ export default function AdminReportsPage() {
       studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       categoryName.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter
-
-    return matchesSearch && matchesStatus
+    return matchesSearch
   })
+
+  // Resetear página cuando cambia el filtro de estado
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus)
+    setPage(1) // vuelve a la primera página al filtrar
+  }
 
   if (loadingReports) return <Spinner text="Cargando reportes del servidor..." />
   if (errorReports) return <div className="text-red-500 p-8 text-center font-bold">Error: {errorReports}</div>
@@ -59,16 +101,16 @@ export default function AdminReportsPage() {
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => handleStatusChange(e.target.value)}
           className="w-full md:w-56 bg-white border border-slate-200 rounded-full px-5 py-3 outline-none text-sm text-slate-600 shadow-sm"
         >
           <option value="ALL">Todos los estados</option>
           {statuses.map((status, index) => (
             <option
-              key={status.value || status.name || index}
-              value={status.value || status.name}
+              key={status.value || index}
+              value={status.value}
             >
-              {status.label || status.name || status.value}
+              {status.label}
             </option>
           ))}
         </select>
@@ -88,47 +130,52 @@ export default function AdminReportsPage() {
             </tr>
           </thead>
           <tbody>
-  {filteredReports.map((report) => (
-    <tr key={report.id} className="bg-white shadow-sm">
-      <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#004B93] font-bold text-xs flex items-center justify-center">
-          {report.initials || (report.student?.first_name?.[0] || 'S')}
-        </div>
-        <span className="font-semibold text-slate-700 text-sm">
-          {report.student?.first_name || report.student?.full_name || report.student || 'Desconocido'}
-        </span>
-      </td>
-      <td className="px-6 py-4 text-slate-500 text-sm">
-        {report.category?.name || report.category || 'Sin categoría'}
-      </td>
-      <td className="px-6 py-4 font-mono font-bold text-[#004B93] text-sm">
-        {report.reported_hours || report.reportedHours || '00:00'}
-      </td>
-      <td className="px-6 py-4 font-mono text-sm">
-        {report.approved_hours || report.approvedHours || '--:--'}
-      </td>
-      <td className="px-6 py-4">
-        <BadgeStatus status={report.status} />
-      </td>
-      <td className="px-6 py-4 text-slate-500 text-xs font-semibold">
-        {report.date || report.created_at?.slice(0, 10)}
-      </td>
-      <td className="px-6 py-4 rounded-r-xl text-right">
-        {/* 🔁 CAMBIO AQUÍ: Botón siempre visible con texto condicional */}
-        <button
-          onClick={() => setReporteSeleccionado(report)}
-          className="text-xs font-bold text-[#004B93] hover:underline"
-        >
-          {report.status === 'PENDING' ? 'Revisar' : 'Editar'}
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+            {filteredReports.map((report) => (
+              <tr key={report.id} className="bg-white shadow-sm">
+                <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#004B93] font-bold text-xs flex items-center justify-center">
+                    {report.initials || (report.student?.first_name?.[0] || 'S')}
+                  </div>
+                  <span className="font-semibold text-slate-700 text-sm">
+                    {report.student?.first_name || report.student?.full_name || report.student || 'Desconocido'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-slate-500 text-sm">
+                  {report.category?.name || report.category || 'Sin categoría'}
+                </td>
+                <td className="px-6 py-4 font-mono font-bold text-[#004B93] text-sm">
+                  {report.hours_spent ?? report.reported_hours ?? report.reportedHours ?? '00:00'}
+                </td>
+                <td className="px-6 py-4 font-mono text-sm">
+                  {report.approved_hours ?? report.approvedHours ?? '--:--'}
+                </td>
+                <td className="px-6 py-4">
+                  <BadgeStatus status={report.status} />
+                </td>
+                <td className="px-6 py-4 text-slate-500 text-xs font-semibold">
+                  {report.date || report.created_at?.slice(0, 10)}
+                </td>
+                <td className="px-6 py-4 rounded-r-xl text-right">
+                  <button
+                    onClick={() => setReporteSeleccionado(report)}
+                    className="text-xs font-bold text-[#004B93] hover:underline"
+                  >
+                    {report.status === 'PENDING' ? 'Revisar' : 'Editar'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
-      <Pagination page={page} pageSize={pageSize} total={filteredReports.length} onPageChange={setPage} />
+      {/* Paginación con el total real del servidor */}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={totalReports}
+        onPageChange={setPage}
+      />
 
       {reporteSeleccionado && (
         <ReviewReportModal
