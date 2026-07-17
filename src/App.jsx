@@ -1,10 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Spinner from './components/common/Spinner'
+import ProtectedRoute from './components/layout/ProtectedRoute'
 
 import PrivateRoute from './components/routes/PrivateRoute'
 import RoleRoute from './components/routes/RoleRoute'
 import EstructuraPrincipal from './components/design/EstructuraPrincipal'
+
+import ReportDetail from './pages/student/ReportDetail'
+import MyReports from './pages/student/MyReports'
 
 // Páginas
 import Login from './pages/shared/Login'
@@ -15,7 +19,12 @@ import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
 import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 import FormularioReporte from './components/FormularioReporte'
+
+// import UserForm from './pages/admin/UserForm'
+// import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
+// import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
+import UserEditPage from './components/ui/UserEditPage'
 
 function App() {
   const { user, isLoading } = useAuth()
@@ -53,6 +62,13 @@ function App() {
           {/* Solo STUDENT */}
           <Route element={<RoleRoute allowedRoles={['STUDENT']} />}>
             <Route path="/student/dashboard" element={<StudentDashboard />} />
+
+          <Route path="/student/reports" element={
+          <ProtectedRoute allowedRoles={['STUDENT']}><MyReports /></ProtectedRoute>
+        } />
+        <Route path="/student/reports/:id" element={
+          <ProtectedRoute allowedRoles={['STUDENT']}><ReportDetail /></ProtectedRoute>
+        } /> 
             
             {/* ruta del formulario aquí */}
             <Route path="/student/reports/new" element={<FormularioReporte />} />
@@ -65,6 +81,7 @@ function App() {
             <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
+            <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
           </Route>
 
         </Route>

@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import { X, Clock, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react'
+import { X, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 
 export default function ReviewReportModal({ report, onClose, onSuccess }) {
+  // Detectar si estamos editando una revisión existente
+  const isEditing = report.status !== 'PENDING'
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Valores del formulario
-  const [approvedHours, setApprovedHours] = useState('')
-  const [reviewerNotes, setReviewerNotes] = useState('')
+  // Valores del formulario precargados si es edición
+  const [approvedHours, setApprovedHours] = useState(
+    isEditing ? (report.approved_hours?.toString() || '0') : ''
+  )
+  const [reviewerNotes, setReviewerNotes] = useState(
+    isEditing ? (report.reviewer_notes || '') : ''
+  )
 
   if (!report) return null
 
-  // Calcular horas máximas
   const maxHours = parseFloat(report.hours_spent || report.reported_hours || report.reportedHours || 0)
 
   const handleApproveFull = () => {
@@ -20,7 +26,6 @@ export default function ReviewReportModal({ report, onClose, onSuccess }) {
   }
 
   const handleApprovePartial = () => {
-    // Dejamos el campo vacío para que el admin ingrese la cantidad manualmente
     setApprovedHours('')
     setError(null)
   }
@@ -30,56 +35,53 @@ export default function ReviewReportModal({ report, onClose, onSuccess }) {
     setError(null)
   }
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  setLoading(true)
-  setError(null)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
-  const parsedHours = parseFloat(approvedHours)
-  if (isNaN(parsedHours) || parsedHours < 0) {
-    setError('Ingresa un número válido de horas.')
-    setLoading(false)
-    return
-  }
-
-  try {
-    const response = await fetch(`/api/v1/reports/${report.id}/review`, {
-      method: 'PATCH',  // 🔁 Cambiado a PATCH
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        approved_hours: parsedHours,
-        reviewer_notes: reviewerNotes.trim() || undefined,
-      }),
-    })
-
-    if (!response.ok) {
-      let errorMsg = 'Error al enviar la revisión'
-      try {
-        const data = await response.json()
-        // FastAPI suele devolver { detail: [...] } o { detail: "string" }
-        if (Array.isArray(data.detail)) {
-          errorMsg = data.detail.map(d => d.msg).join(', ')
-        } else if (data.detail) {
-          errorMsg = data.detail
-        }
-      } catch (e) {
-        // No se pudo parsear el error
-      }
-      throw new Error(errorMsg)
+    const parsedHours = parseFloat(approvedHours)
+    if (isNaN(parsedHours) || parsedHours < 0) {
+      setError('Ingresa un número válido de horas.')
+      setLoading(false)
+      return
     }
 
-    onSuccess?.()
-    onClose?.()
-  } catch (err) {
-    setError(err.message || 'Error de conexión')
-  } finally {
-    setLoading(false)
+    try {
+      const response = await fetch(`/api/v1/reports/${report.id}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approved_hours: parsedHours,
+          reviewer_notes: reviewerNotes.trim() || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        let errorMsg = 'Error al enviar la revisión'
+        try {
+          const data = await response.json()
+          if (Array.isArray(data.detail)) {
+            errorMsg = data.detail.map(d => d.msg).join(', ')
+          } else if (data.detail) {
+            errorMsg = data.detail
+          }
+        } catch (e) {}
+        throw new Error(errorMsg)
+      }
+
+      onSuccess?.()
+      onClose?.()
+    } catch (err) {
+      setError(err.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }
-}
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
-        {/* Botón cerrar */}
         <button
           onClick={onClose}
           disabled={loading}
@@ -88,9 +90,11 @@ const handleSubmit = async (e) => {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-bold text-[#0C2340] mb-4">Revisar reporte</h2>
+        <h2 className="text-xl font-bold text-[#0C2340] mb-4">
+          {isEditing ? 'Editar revisión' : 'Revisar reporte'}
+        </h2>
 
-        {/* Datos del reporte */}
+        {/* Datos del reporte (igual que antes) */}
         <div className="space-y-2 text-sm text-slate-700 bg-slate-50 p-3 rounded-xl">
           <p>
             <span className="font-semibold">Estudiante:</span>{' '}
@@ -113,9 +117,15 @@ const handleSubmit = async (e) => {
               <span className="font-semibold">Descripción:</span> {report.description}
             </p>
           )}
+          {isEditing && (
+            <p>
+              <span className="font-semibold">Estado actual:</span>{' '}
+              {report.status}
+            </p>
+          )}
         </div>
 
-        {/* Acciones rápidas (pre‑rellenan las horas) */}
+        {/* Acciones rápidas */}
         <div className="flex gap-2 mt-4">
           <button
             type="button"
@@ -146,7 +156,6 @@ const handleSubmit = async (e) => {
           </button>
         </div>
 
-        {/* Formulario de revisión */}
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -183,7 +192,6 @@ const handleSubmit = async (e) => {
             />
           </div>
 
-          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm">
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -191,7 +199,6 @@ const handleSubmit = async (e) => {
             </div>
           )}
 
-          {/* Botones finales */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
@@ -206,7 +213,7 @@ const handleSubmit = async (e) => {
               disabled={loading}
               className="px-5 py-2.5 rounded-full bg-[#004B93] text-white text-sm font-medium hover:bg-[#003A73] transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              {loading ? 'Enviando...' : 'Confirmar revisión'}
+              {loading ? 'Guardando...' : isEditing ? 'Actualizar revisión' : 'Confirmar revisión'}
             </button>
           </div>
         </form>
