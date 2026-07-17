@@ -31,15 +31,18 @@ const MyReports = () => {
   const [pdfError, setPdfError] = useState(null)
 
   const handleOpenPdf = async (id) => {
-    setIsPdfOpen(true)
     setPdfLoading(true)
     setPdfError(null)
     try {
       const response = await api.get(`/reports/${id}/evidence/stream`, { responseType: 'blob' })
       const blob = new Blob([response.data], { type: 'application/pdf' })
-      setPdfUrl(URL.createObjectURL(blob))
+      const url = URL.createObjectURL(blob)
+      
+      // Con esta línea se abrirá automáticamente en una pestaña nueva
+      window.open(url, '_blank')
     } catch (err) {
       setPdfError('No se pudo cargar la evidencia.')
+      alert('No se pudo cargar la evidencia.')
     } finally {
       setPdfLoading(false)
     }
