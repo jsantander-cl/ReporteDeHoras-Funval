@@ -98,16 +98,20 @@ const MyReports = () => {
                           onClick={() => navigate(`/student/reports/${r.id}/edit`, { state: { report: r } })}
                           className="flex items-center gap-1 text-slate-600 hover:text-primary transition-colors font-medium"
                         >
-                          <Eye className="w-4 h-4" /> <span className="text-xs">Editar</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} loading={loading} />
-          </div>
+                          <Eye className="w-4 h-4 mr-1" /> Ver
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                  {reports.length === 0 && (
+                    <tr><td colSpan="8" className="px-6 py-8 text-center text-outline">No tienes reportes aún</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            //cambio valido
+            <Pagination page={page}  pageSize={pageSize} total={totalPages} onPageChange={setPage} />
+          </>
         )}
       </div>
     </div>
