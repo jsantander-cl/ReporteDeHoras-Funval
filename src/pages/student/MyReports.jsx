@@ -80,7 +80,7 @@ const MyReports = () => {
                 </tbody>
               </table>
             </div>
-            
+            //cambio valido
             <Pagination page={page}  pageSize={pageSize} total={totalPages} onPageChange={setPage} />
           </>
         )}
