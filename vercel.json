@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "https://www.hs-api.devfunval.cloud/api/v1/$1"
+    }
+  ]
+}
