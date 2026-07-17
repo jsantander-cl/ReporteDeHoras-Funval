@@ -15,14 +15,7 @@ const BarraSuperior = ({ onMenuClick, user }) => {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="hidden sm:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2">
-          <Search className="w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search records..."
-            className="bg-transparent outline-none text-sm w-48"
-          />
-        </div>
+    
 
         <span className="hidden sm:inline text-sm text-gray-600 font-medium">
           {user?.full_name || user?.email}
