@@ -5,6 +5,7 @@ import ModalConfirm from '../../components/ui/ModalConfirm'
 import Pagination from '../../components/ui/Pagination'
 import Spinner from '../../components/common/Spinner'
 import { useFetch } from '../../hooks/useFetch'
+import api from '../../services/api'
 
 export default function UsersListPage() {
   const navigate = useNavigate()
@@ -46,16 +47,14 @@ export default function UsersListPage() {
     if (!selectedUser) return
     setDeleting(true)
     try {
-      const res = await fetch(`/api/v1/users/${selectedUser.id}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Error al eliminar usuario')
-      }
+      await api.delete(`/users/${selectedUser.id}`)
       setIsDeleteModalOpen(false)
       setSelectedUser(null)
       setReloadFlag(prev => prev + 1)
     } catch (err) {
-      alert(err.message)
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : detail
+      alert(msg || 'Error al eliminar usuario')
     } finally {
       setDeleting(false)
     }
@@ -75,17 +74,11 @@ export default function UsersListPage() {
       const formData = new FormData()
       formData.append('file', file) // el backend espera un campo 'file'
 
-      const res = await fetch('/api/v1/users/bulk', {
-        method: 'POST',
-        body: formData,
+      const res = await api.post('/users/bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Error al procesar el archivo CSV')
-      }
-
-      const result = await res.json()
+      const result = res.data
       // Se espera un objeto del tipo: { created: 5, skipped: 2, errors: [...] }
       setImportResult({
         created: result.created || 0,
@@ -94,7 +87,9 @@ export default function UsersListPage() {
       })
       setReloadFlag(prev => prev + 1) // refrescar lista
     } catch (err) {
-      setImportError(err.message)
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : detail
+      setImportError(msg || 'Error al procesar el archivo CSV')
     } finally {
       setImporting(false)
       // Resetear el input para permitir volver a seleccionar el mismo archivo

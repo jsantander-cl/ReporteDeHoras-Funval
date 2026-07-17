@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
-import StatusBadge from '../../components/common/StatusBadge'
+import StatusBadge from '../../components/ui/BadgeStatus'
 import Pagination from '../../components/ui/Pagination'
 import Spinner from '../../components/common/Spinner'
 import Button from '../../components/common/Button'

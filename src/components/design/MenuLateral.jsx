@@ -70,18 +70,16 @@ const MenuLateral = ({ user, isOpen = true, onClose, onOpenProfile }) => {
               </NavLink>
             ))}
 
-            {/* === BOTÓN DE PERFIL (AGREGADO) === */}
-            {user?.role !== 'ADMIN' && (
-              <button
-                onClick={() => {
-                  onOpenProfile(); 
-                  if (window.innerWidth < 768) onClose(); 
-                }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-gray-500 hover:bg-[#E6F0FA] hover:text-[#004B93] hover:font-semibold text-left w-full"              >
-                <User className="w-5 h-5" />
-                Perfil
-              </button>
-            )}
+            {/* === BOTÓN DE PERFIL === (Tarea 11: accesible para ADMIN y STUDENT) */}
+            <button
+              onClick={() => {
+                onOpenProfile();
+                if (window.innerWidth < 768) onClose();
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-gray-500 hover:bg-[#E6F0FA] hover:text-[#004B93] hover:font-semibold text-left w-full"              >
+              <User className="w-5 h-5" />
+              Perfil
+            </button>
 
           </nav>
         </div>

@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
 import PdfViewer from '../../components/common/PdfViewer'
-import StatusBadge from '../../components/common/StatusBadge'
+import StatusBadge from '../../components/ui/BadgeStatus'
 import Spinner from '../../components/common/Spinner'
 import Button from '../../components/common/Button'
 import { formatDateTime } from '../../utils/helpers'
