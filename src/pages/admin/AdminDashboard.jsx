@@ -2,33 +2,45 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/common/Spinner'
-import { Users, FileWarning, FileCheck, ArrowRight } from 'lucide-react'
+import { Users, FileText, BookOpen, Tag, ArrowRight } from 'lucide-react'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const { data, loading, error } = useFetch('/dashboard/stats')
-  const [mounted, setMounted] = useState(false)
 
+  // Llamadas a las APIs necesarias
+  const { data: statsData, loading: loadingStats, error: errorStats } = useFetch('/dashboard/stats')
+  const { data: coursesData, loading: loadingCourses, error: errorCourses } = useFetch('/courses/')
+  const { data: categoriesData, loading: loadingCategories, error: errorCategories } = useFetch('/categories/')
+
+  const [mounted, setMounted] = useState(false)
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 100)
     return () => clearTimeout(t)
   }, [])
 
-  if (loading) return <Spinner text="Cargando panel..." />
-  if (error) return <p className="text-red-600 text-sm">{error}</p>
+  // Determinamos si alguna carga está en progreso
+  const isLoading = loadingStats || loadingCourses || loadingCategories
 
-  // Extraemos los datos reales según la respuesta del backend
-  const usuarios = data?.users || {}
-  const reportes = data?.reports || {}
+  if (isLoading) return <Spinner text="Cargando panel..." />
 
-  const totalEstudiantes = usuarios.total_students ?? '—'
-  const reportesPendientes = reportes.pending ?? '—'
+  // Manejamos errores individuales, pero mostramos un mensaje genérico si algo falla
+  if (errorStats) return <p className="text-red-600 text-sm">Error al cargar estadísticas: {errorStats}</p>
+  if (errorCourses) return <p className="text-red-600 text-sm">Error al cargar cursos: {errorCourses}</p>
+  if (errorCategories) return <p className="text-red-600 text-sm">Error al cargar categorías: {errorCategories}</p>
 
-  // Reportes revisados = aprobados + rechazados (los que ya fueron atendidos)
-  const reportesRevisados =
-    reportes.approved !== undefined && reportes.rejected !== undefined
-      ? reportes.approved + reportes.rejected
-      : '—'
+  // Extracción segura de datos
+  const usuarios = statsData?.users || {}
+  const reportes = statsData?.reports || {}
+
+  const totalUsuarios = (usuarios.total_students || 0) + (usuarios.total_admins || 0)
+  const totalReportes = reportes.total ?? '—'
+
+  // Para cursos y categorías, asumimos que vienen como arreglo (puede que tengan paginación)
+  const cursos = Array.isArray(coursesData) ? coursesData : coursesData?.items || coursesData?.data || []
+  const categorias = Array.isArray(categoriesData) ? categoriesData : categoriesData?.items || categoriesData?.data || []
+
+  const totalCursos = cursos.length
+  const totalCategorias = categorias.length
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -39,8 +51,9 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {/* Total Estudiantes */}
+      {/* Grid de 4 tarjetas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Total Usuarios */}
         <div
           onClick={() => navigate('/admin/users')}
           className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
@@ -49,42 +62,58 @@ export default function AdminDashboard() {
             <Users className="w-5 h-5 text-[#004B93]" />
           </div>
           <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wide">
-            Total Estudiantes
+            Total Usuarios
           </h3>
           <p className="text-4xl font-extrabold text-slate-900 mt-1">
-            {totalEstudiantes}
+            {totalUsuarios}
           </p>
         </div>
 
-        {/* Reportes por Revisar */}
+        {/* Total Reportes */}
         <div
-          onClick={() => navigate('/admin/reports', { state: { statusFilter: 'PENDING' } })}
+          onClick={() => navigate('/admin/reports')}
           className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
         >
-          <div className="p-2 bg-red-50 rounded-lg w-fit mb-3">
-            <FileWarning className="w-5 h-5 text-red-500" />
+          <div className="p-2 bg-purple-50 rounded-lg w-fit mb-3">
+            <FileText className="w-5 h-5 text-purple-600" />
           </div>
           <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wide">
-            Reportes por Revisar
+            Total Reportes
           </h3>
           <p className="text-4xl font-extrabold text-slate-900 mt-1">
-            {reportesPendientes}
+            {totalReportes}
           </p>
         </div>
 
-        {/* Reportes Revisados */}
+        {/* Cursos Activos */}
         <div
-          onClick={() => navigate('/admin/reports', { state: { statusFilter: 'REVIEWED' } })}
-          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1"
+          onClick={() => navigate('/admin/courses')}
+          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
         >
-          <div className="p-2 bg-green-50 rounded-lg w-fit mb-3">
-            <FileCheck className="w-5 h-5 text-green-600" />
+          <div className="p-2 bg-emerald-50 rounded-lg w-fit mb-3">
+            <BookOpen className="w-5 h-5 text-emerald-600" />
           </div>
           <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wide">
-            Reportes Revisados
+            Cursos Activos
           </h3>
           <p className="text-4xl font-extrabold text-slate-900 mt-1">
-            {reportesRevisados}
+            {totalCursos}
+          </p>
+        </div>
+
+        {/* Categorías Activas */}
+        <div
+          onClick={() => navigate('/admin/categories')}
+          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+        >
+          <div className="p-2 bg-amber-50 rounded-lg w-fit mb-3">
+            <Tag className="w-5 h-5 text-amber-600" />
+          </div>
+          <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wide">
+            Categorías Activas
+          </h3>
+          <p className="text-4xl font-extrabold text-slate-900 mt-1">
+            {totalCategorias}
           </p>
         </div>
       </div>
