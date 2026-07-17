@@ -81,7 +81,7 @@ const MyReports = () => {
               </table>
             </div>
             
-            <Pagination page={page} total={totalPages} onPageChange={setPage} />
+            <Pagination page={page}  pageSize={pageSize} total={totalPages} onPageChange={setPage} />
           </>
         )}
       </div>
