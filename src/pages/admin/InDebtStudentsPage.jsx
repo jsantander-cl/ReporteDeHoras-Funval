@@ -17,14 +17,14 @@ const InDebtStudentsPage = () => {
 
   const [allStudents, setAllStudents] = useState([]); // Toditos los estudiantes traídos del backend (sin paginar, para poder filtrar y ordenar)
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true); // true mientras se traen los estudiantes del backend
+  const [error, setError] = useState(null); // mensaje de error si falla la carga de estudiantes
 
   // === Filtros ===
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false); // true si el menú flotante de filtros está abierto
   const [statusFilter, setStatusFilter] = useState('ALL'); // ALL | NO_PROGRESS | IN_PROGRESS
   const [requiredFilter, setRequiredFilter] = useState('ALL'); // ALL | valor numérico de horas requeridas
-  const filterRef = useRef(null);
+  const filterRef = useRef(null); // referencia al contenedor del menú flotante de filtros
 
 
   // Cerrar menú de filtros al hacer click fuera
