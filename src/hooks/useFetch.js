@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 
-export const useFetch = (endpoint) => {
+// 'dependencies' como segundo parámetro opcional, por defecto vacío 
+export const useFetch = (endpoint, dependencies = []) => {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -34,7 +35,10 @@ export const useFetch = (endpoint) => {
     fetchData()
 
     return () => { cancelled = true }
-  }, [endpoint])
+    // AÑADIMOS ...dependencies AL ARRAY DE DEPENDENCIAS
+    // Si tus compañeros llaman al hook sin pasar el segundo parámetro,
+    // [endpoint, ...[]] sigue siendo [endpoint], así que su código NO se rompe.
+  }, [endpoint, ...dependencies]) 
 
-  return { data, loading, error, refetch: () => window.location.reload() }
+  return { data, loading, error }
 }

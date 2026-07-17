@@ -19,6 +19,8 @@ import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
 import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 import FormularioReporte from './components/FormularioReporte'
+import EditReportPage from './pages/estudiante/EditReportPage'
+import CategoriesCrud from './pages/admin/mantenimientos/CategoriesCrud'
 import CountriesCrud from './pages/admin/mantenimientos/CountriesCrud'
 import CoursesCrud from './pages/admin/mantenimientos/CoursesCrud'
 
@@ -71,6 +73,10 @@ function App() {
         <Route path="/student/reports/:id" element={
           <ProtectedRoute allowedRoles={['STUDENT']}><ReportDetail /></ProtectedRoute>
         } /> 
+
+        <Route path="/student/reports/:id/edit" element={
+    <ProtectedRoute allowedRoles={['STUDENT']}><EditReportPage /></ProtectedRoute>
+  } />
             
             {/* ruta del formulario aquí */}
             <Route path="/student/reports/new" element={<FormularioReporte />} />
@@ -83,12 +89,14 @@ function App() {
             <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
+            <Route path="/admin/maintenance/categoriescrud" element={<CategoriesCrud />}/> 
             <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
             <Route path="/admin/maintenance/countries" element={<CountriesCrud />} />
             <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />
 
 
           </Route>
+          
 
         </Route>
       </Route>
