@@ -2,34 +2,48 @@ import { useState } from 'react'
 import { Search } from 'lucide-react'
 import BadgeStatus from '../../components/ui/BadgeStatus'
 import Pagination from '../../components/ui/Pagination'
+import ReviewReportModal from '../../components/ui/ReviewReportModal'
+import { useFetch } from '../../hooks/useFetch'
+import Spinner from '../../components/common/Spinner'
 
-// Tarea 27: Listado de Reportes con filtros -> GET /reports/ + GET /enums/report-statuses
 export default function AdminReportsPage() {
-  const [reports] = useState([
-    { id: 1, student: 'Alejandro Luna', initials: 'AL', category: 'Servicio Comunitario', reportedHours: '04:30', approvedHours: '04:30', status: 'APPROVED_FULL', date: '12 OCT 2023' },
-    { id: 2, student: 'Sofía Ramírez', initials: 'SR', category: 'Prácticas Profesionales', reportedHours: '08:00', approvedHours: '--:--', status: 'PENDING', date: '10 OCT 2023' },
-    { id: 3, student: 'Carlos Pérez', initials: 'CP', category: 'Taller Extracurricular', reportedHours: '02:15', approvedHours: '00:00', status: 'REJECTED', date: '05 OCT 2023' },
-    { id: 4, student: 'Alejandro Luna', initials: 'AL', category: 'Apoyo Administrativo', reportedHours: '05:00', approvedHours: '05:00', status: 'APPROVED_FULL', date: '01 OCT 2023' },
-  ])
+  const { data: reportsData, loading: loadingReports, error: errorReports } = useFetch('/reports/')
+  const { data: statusesData } = useFetch('/enums/report-statuses')
 
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(1)
   const pageSize = 10
 
+  const [reporteSeleccionado, setReporteSeleccionado] = useState(null)
+
+  const reports = reportsData?.items || reportsData || []
+  const statuses = statusesData || []
+
   const filteredReports = reports.filter((r) => {
+    const rawStudent = r.student?.first_name || r.student?.full_name || r.student
+    const rawCategory = r.category?.name || r.category
+
+    const studentName = typeof rawStudent === 'string' ? rawStudent : ''
+    const categoryName = typeof rawCategory === 'string' ? rawCategory : ''
+
     const matchesSearch =
-      r.student.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.category.toLowerCase().includes(searchQuery.toLowerCase())
+      studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      categoryName.toLowerCase().includes(searchQuery.toLowerCase())
+
     const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter
+
     return matchesSearch && matchesStatus
   })
+
+  if (loadingReports) return <Spinner text="Cargando reportes del servidor..." />
+  if (errorReports) return <div className="text-red-500 p-8 text-center font-bold">Error: {errorReports}</div>
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-extrabold text-[#0C2340]">Listado de Reportes</h1>
-        <p className="text-slate-500 text-sm mt-1">Consulta y revisa las horas de servicio reportadas por los estudiantes.</p>
+        <p className="text-slate-500 text-sm mt-1">Consulta y revisa las horas de servicio reportadas.</p>
       </div>
 
       <section className="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -49,10 +63,14 @@ export default function AdminReportsPage() {
           className="w-full md:w-56 bg-white border border-slate-200 rounded-full px-5 py-3 outline-none text-sm text-slate-600 shadow-sm"
         >
           <option value="ALL">Todos los estados</option>
-          <option value="APPROVED_FULL">Aprobados</option>
-          <option value="APPROVED_PARTIAL">Aprobados Parcial</option>
-          <option value="PENDING">Pendientes</option>
-          <option value="REJECTED">Rechazados</option>
+          {statuses.map((status, index) => (
+            <option
+              key={status.value || status.name || index}
+              value={status.value || status.name}
+            >
+              {status.label || status.name || status.value}
+            </option>
+          ))}
         </select>
       </section>
 
@@ -70,37 +88,57 @@ export default function AdminReportsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredReports.map((report) => (
-              <tr key={report.id} className="bg-white shadow-sm">
-                <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#004B93] font-bold text-xs flex items-center justify-center">
-                    {report.initials}
-                  </div>
-                  <span className="font-semibold text-slate-700 text-sm">{report.student}</span>
-                </td>
-                <td className="px-6 py-4 text-slate-500 text-sm">{report.category}</td>
-                <td className="px-6 py-4 font-mono font-bold text-[#004B93] text-sm">{report.reportedHours}</td>
-                <td className="px-6 py-4 font-mono text-sm">{report.approvedHours}</td>
-                <td className="px-6 py-4"><BadgeStatus status={report.status} /></td>
-                <td className="px-6 py-4 text-slate-500 text-xs font-semibold">{report.date}</td>
-                <td className="px-6 py-4 rounded-r-xl text-right">
-                  {report.status === 'PENDING' && (
-                    <button className="text-xs font-bold text-[#004B93] hover:underline">Revisar</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  {filteredReports.map((report) => (
+    <tr key={report.id} className="bg-white shadow-sm">
+      <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#004B93] font-bold text-xs flex items-center justify-center">
+          {report.initials || (report.student?.first_name?.[0] || 'S')}
+        </div>
+        <span className="font-semibold text-slate-700 text-sm">
+          {report.student?.first_name || report.student?.full_name || report.student || 'Desconocido'}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-slate-500 text-sm">
+        {report.category?.name || report.category || 'Sin categoría'}
+      </td>
+      <td className="px-6 py-4 font-mono font-bold text-[#004B93] text-sm">
+        {report.reported_hours || report.reportedHours || '00:00'}
+      </td>
+      <td className="px-6 py-4 font-mono text-sm">
+        {report.approved_hours || report.approvedHours || '--:--'}
+      </td>
+      <td className="px-6 py-4">
+        <BadgeStatus status={report.status} />
+      </td>
+      <td className="px-6 py-4 text-slate-500 text-xs font-semibold">
+        {report.date || report.created_at?.slice(0, 10)}
+      </td>
+      <td className="px-6 py-4 rounded-r-xl text-right">
+        {/* 🔁 CAMBIO AQUÍ: Botón siempre visible con texto condicional */}
+        <button
+          onClick={() => setReporteSeleccionado(report)}
+          className="text-xs font-bold text-[#004B93] hover:underline"
+        >
+          {report.status === 'PENDING' ? 'Revisar' : 'Editar'}
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
         </table>
-
-        {filteredReports.length === 0 && (
-          <div className="py-12 text-center text-slate-400 bg-white rounded-xl">
-            No hay reportes que coincidan con los filtros seleccionados.
-          </div>
-        )}
       </div>
 
       <Pagination page={page} pageSize={pageSize} total={filteredReports.length} onPageChange={setPage} />
+
+      {reporteSeleccionado && (
+        <ReviewReportModal
+          report={reporteSeleccionado}
+          onClose={() => setReporteSeleccionado(null)}
+          onSuccess={() => {
+            window.location.reload()
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -22,6 +22,7 @@ import FormularioReporte from './components/FormularioReporte'
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 // import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
+import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 
 function App() {
   const { user, isLoading } = useAuth()
@@ -53,9 +54,8 @@ function App() {
       <Route element={<PrivateRoute />}>
         <Route element={<EstructuraPrincipal />}>
 
-          {/* Compartidas entre ADMIN y STUDENT */}
-          {/* <Route path="/perfil" element={<ProfilePage />} /> */}
-          {/* <Route path="/perfil/password" element={<ChangePasswordPage />} /> */}
+          {/* Nueva ruta de cambio de contraseña */}
+          <Route path="/cambiar-contrasena" element={<ChangePasswordPage />} />
 
           {/* Solo STUDENT */}
           <Route element={<RoleRoute allowedRoles={['STUDENT']} />}>
@@ -76,9 +76,7 @@ function App() {
           <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
-            {/* <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} /> */}
             <Route path="/admin/users" element={<UsersListPage />} />
-            {/* <Route path="/admin/users/create" element={<UserForm />} /> */}
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
           </Route>
 
@@ -111,6 +109,5 @@ function App() {
     </Routes>
   )
 }
-
 
 export default App
