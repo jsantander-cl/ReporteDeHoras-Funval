@@ -22,7 +22,7 @@ export default function UsersListPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
-  const pageSize = 10
+  const pageSize = 4
   const [reloadFlag, setReloadFlag] = useState(0)
 
   // Estados del Modal de Creación
