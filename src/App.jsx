@@ -85,9 +85,7 @@ function App() {
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
             <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
             <Route path="/admin/maintenance/countries" element={<CountriesCrud />} />
-            <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />
-
-
+            <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />      
           </Route>
 
         </Route>
