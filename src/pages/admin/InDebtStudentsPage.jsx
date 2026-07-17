@@ -1,24 +1,22 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Search, Filter, Download, AlertCircle } from 'lucide-react';
+import { Search, Filter, AlertCircle } from 'lucide-react';
 import Pagination from '../../components/ui/Pagination';
 import Spinner from '../../components/common/Spinner';
 import api from '../../services/api';
 
 // Tarea 26: Estudiantes con horas pendientes (In-Debt) -> GET /users/in-debt
 //
-// NOTA: se filtra/ordena/pagina en el cliente porque el backend no confirma
-// tener soporte para un parámetro de búsqueda por texto. Como el endpoint
-// SÍ pagina con un page_size máximo (pedir uno muy alto, ej. 1000, devuelve
-// 422 Unprocessable Entity), acá se traen todas las páginas en tandas de
-// SAFE_PAGE_SIZE y se van acumulando antes de filtrar/ordenar/paginar en UI.
+
 const SAFE_PAGE_SIZE = 100; // ajustar si el backend confirma otro máximo permitido
 const PAGE_SIZE = 5; // tamaño de página que se muestra en la tabla
 
+// Página de administración: Estudiantes con horas pendientes (In-Debt)
 const InDebtStudentsPage = () => {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1); // Página actual de la tabla
+  const [search, setSearch] = useState(''); // búsqueda (nombre o email)
 
-  const [allStudents, setAllStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]); // Toditos los estudiantes traídos del backend (sin paginar, para poder filtrar y ordenar)
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,6 +26,8 @@ const InDebtStudentsPage = () => {
   const [requiredFilter, setRequiredFilter] = useState('ALL'); // ALL | valor numérico de horas requeridas
   const filterRef = useRef(null);
 
+
+  // Cerrar menú de filtros al hacer click fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -38,19 +38,24 @@ const InDebtStudentsPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+
+  // Traer todos los estudiantes con horas pendientes (In-Debt) del backend
   useEffect(() => {
     let cancelled = false;
 
+    // Función para traer todas las páginas de estudiantes con horas pendientes
     const fetchAll = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // Traer la primera página para conocer el total de estudiantes
         const first = await api.get(`/users/in-debt?page=1&page_size=${SAFE_PAGE_SIZE}`);
         let items = first.data?.items ?? [];
         const total = first.data?.total ?? items.length;
         const totalPages = Math.ceil(total / SAFE_PAGE_SIZE);
 
+        // Traer las páginas restantes en paralelo (si hay más de 1 página)
         if (totalPages > 1) {
           const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
           const responses = await Promise.all(
@@ -61,6 +66,7 @@ const InDebtStudentsPage = () => {
           });
         }
 
+        // Guardar los estudiantes traídos en el estado
         if (!cancelled) setAllStudents(items);
       } catch (err) {
         if (!cancelled) {
@@ -72,6 +78,7 @@ const InDebtStudentsPage = () => {
       }
     };
 
+    // Ejecutar la función de traer todos los estudiantes
     fetchAll();
     return () => { cancelled = true };
   }, []);
@@ -82,48 +89,60 @@ const InDebtStudentsPage = () => {
     return [...values].sort((a, b) => a - b);
   }, [allStudents]);
 
+  // Filtrar y ordenar los estudiantes según búsqueda y filtros activos
   const filteredAndSorted = useMemo(() => {
     const term = search.trim().toLowerCase();
 
     let result = allStudents;
 
+    // Filtrar por término de búsqueda (nombre o email)
     if (term) {
       result = result.filter(
         (s) => s.full_name?.toLowerCase().includes(term) || s.email?.toLowerCase().includes(term)
       );
     }
 
+    // Filtrar por estado de horas (sin avance, en progreso)
     if (statusFilter === 'NO_PROGRESS') {
       result = result.filter((s) => (s.approved_hours ?? 0) === 0);
     } else if (statusFilter === 'IN_PROGRESS') {
       result = result.filter((s) => (s.approved_hours ?? 0) > 0 && (s.approved_hours ?? 0) < (s.required_hours ?? 0));
     }
 
+
+    // Filtrar por horas requeridas específicas
     if (requiredFilter !== 'ALL') {
       result = result.filter((s) => s.required_hours === Number(requiredFilter));
     }
 
+    // Ordenar por horas faltantes (missing_hours) de mayor a menor
     return [...result].sort((a, b) => (b.missing_hours ?? 0) - (a.missing_hours ?? 0));
   }, [allStudents, search, statusFilter, requiredFilter]);
 
+  // Paginación: calcular total y slice de estudiantes a mostrar en la página actual
   const total = filteredAndSorted.length;
   const paged = filteredAndSorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Manejar cambios en el input de búsqueda
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setPage(1);
   };
 
+  // Aplicar filtros y resetear filtros
   const applyFilters = (nextStatus, nextRequired) => {
     setStatusFilter(nextStatus);
     setRequiredFilter(nextRequired);
     setPage(1);
   };
 
+  // Resetear filtros a "Todos"
   const resetFilters = () => applyFilters('ALL', 'ALL');
 
+  // Determinar si hay filtros activos (para mostrar chips y botón de limpiar)
   const hasActiveFilters = statusFilter !== 'ALL' || requiredFilter !== 'ALL';
 
+  // Renderizar la página
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
       {/* Título y Descripción */}
@@ -147,6 +166,7 @@ const InDebtStudentsPage = () => {
           />
         </div>
 
+        {/* BOTON DEL FILTRO */}
         <div className="flex gap-2 w-full md:w-auto relative" ref={filterRef}>
           <button
             onClick={() => setIsFilterOpen((prev) => !prev)}
@@ -186,6 +206,8 @@ const InDebtStudentsPage = () => {
                   >
                     Todos
                   </button>
+
+                  {/* Botones de estado de horas: Sin avance y En progreso */}
                   <button
                     onClick={() => applyFilters('NO_PROGRESS', requiredFilter)}
                     className={`text-xs py-2 px-3 rounded-lg font-bold border text-left transition-all ${
@@ -194,6 +216,8 @@ const InDebtStudentsPage = () => {
                   >
                     Sin avance <span className="font-normal text-slate-400">(0 horas aprobadas)</span>
                   </button>
+
+                  {/* Botón de estado de horas: En progreso */}
                   <button
                     onClick={() => applyFilters('IN_PROGRESS', requiredFilter)}
                     className={`text-xs py-2 px-3 rounded-lg font-bold border text-left transition-all ${
@@ -217,6 +241,8 @@ const InDebtStudentsPage = () => {
                   >
                     Todas
                   </button>
+
+                  { /* Botones de horas requeridas */ }
                   {requiredHoursOptions.map((hours) => (
                     <button
                       key={hours}
@@ -245,6 +271,8 @@ const InDebtStudentsPage = () => {
               <button onClick={() => applyFilters('ALL', requiredFilter)} className="text-slate-400 hover:text-slate-600 font-extrabold ml-1">×</button>
             </span>
           )}
+
+          {/* Chip de filtro de horas requeridas */ }
           {requiredFilter !== 'ALL' && (
             <span className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
               {requiredFilter}h requeridas
@@ -277,6 +305,8 @@ const InDebtStudentsPage = () => {
                 <th className="px-6 pb-2">Horas Faltantes</th>
               </tr>
             </thead>
+
+            {/* Cuerpo de la tabla: estudiantes paginados */ }
             <tbody>
               {paged.map((student) => (
                 <tr key={student.id} className="bg-white shadow-sm">
@@ -294,6 +324,7 @@ const InDebtStudentsPage = () => {
             </tbody>
           </table>
 
+         {/* Mensaje cuando no hay estudiantes que coincidan con la búsqueda o filtros */ }
           {paged.length === 0 && (
             <div className="py-12 text-center text-slate-400 bg-white">
               No hay estudiantes que coincidan con la búsqueda o los filtros aplicados.
@@ -302,6 +333,7 @@ const InDebtStudentsPage = () => {
         </div>
       )}
 
+      {/* Paginación */}
       {!loading && !error && total > 0 && (
         <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
       )}
