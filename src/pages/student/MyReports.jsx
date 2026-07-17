@@ -91,7 +91,7 @@ const MyReports = () => {
                       <td className="px-6 py-4">{r.category?.name}</td>
                       <td className="px-6 py-4">{r.description}</td>
                       <td className="px-6 py-4 text-right">{r.hours_spent}h</td>
-                      <td className="px-6 py-4 text-right">0h</td>
+                      <td className="px-6 py-4 text-right text-on-surface-variant">{r.approved_hours || 0}h</td>
                       <td className="px-6 py-4"><StatusBadge status={r.status} /></td>
                       <td className="px-6 py-4">{formatDateTime(r.created_at)}</td>
                       <td className="px-6 py-4">
