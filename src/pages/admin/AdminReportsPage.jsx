@@ -88,34 +88,43 @@ export default function AdminReportsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredReports.map((report) => (
-              <tr key={report.id} className="bg-white shadow-sm">
-                <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#004B93] font-bold text-xs flex items-center justify-center">
-                    {report.initials || (report.student?.first_name?.[0] || 'S')}
-                  </div>
-                  <span className="font-semibold text-slate-700 text-sm">
-                    {report.student?.first_name || report.student?.full_name || report.student || 'Desconocido'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-slate-500 text-sm">{report.category?.name || report.category || 'Sin categoría'}</td>
-                <td className="px-6 py-4 font-mono font-bold text-[#004B93] text-sm">{report.reported_hours || report.reportedHours || '00:00'}</td>
-                <td className="px-6 py-4 font-mono text-sm">{report.approved_hours || report.approvedHours || '--:--'}</td>
-                <td className="px-6 py-4"><BadgeStatus status={report.status} /></td>
-                <td className="px-6 py-4 text-slate-500 text-xs font-semibold">{report.date || report.created_at?.slice(0, 10)}</td>
-                <td className="px-6 py-4 rounded-r-xl text-right">
-                  {report.status === 'PENDING' && (
-                    <button
-                      onClick={() => setReporteSeleccionado(report)}
-                      className="text-xs font-bold text-[#004B93] hover:underline"
-                    >
-                      Revisar
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  {filteredReports.map((report) => (
+    <tr key={report.id} className="bg-white shadow-sm">
+      <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-[#E2E8F0] text-[#004B93] font-bold text-xs flex items-center justify-center">
+          {report.initials || (report.student?.first_name?.[0] || 'S')}
+        </div>
+        <span className="font-semibold text-slate-700 text-sm">
+          {report.student?.first_name || report.student?.full_name || report.student || 'Desconocido'}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-slate-500 text-sm">
+        {report.category?.name || report.category || 'Sin categoría'}
+      </td>
+      <td className="px-6 py-4 font-mono font-bold text-[#004B93] text-sm">
+        {report.reported_hours || report.reportedHours || '00:00'}
+      </td>
+      <td className="px-6 py-4 font-mono text-sm">
+        {report.approved_hours || report.approvedHours || '--:--'}
+      </td>
+      <td className="px-6 py-4">
+        <BadgeStatus status={report.status} />
+      </td>
+      <td className="px-6 py-4 text-slate-500 text-xs font-semibold">
+        {report.date || report.created_at?.slice(0, 10)}
+      </td>
+      <td className="px-6 py-4 rounded-r-xl text-right">
+        {/* 🔁 CAMBIO AQUÍ: Botón siempre visible con texto condicional */}
+        <button
+          onClick={() => setReporteSeleccionado(report)}
+          className="text-xs font-bold text-[#004B93] hover:underline"
+        >
+          {report.status === 'PENDING' ? 'Revisar' : 'Editar'}
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
         </table>
       </div>
 
