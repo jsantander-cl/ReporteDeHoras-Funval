@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Plus, Pencil, Trash2, X } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
-import api from '../../../services/api'  // ajusta la ruta si es necesario
+import api from '../../../services/api'  
 import Spinner from '../../../components/common/Spinner'
 import ModalConfirm from '../../../components/ui/ModalConfirm'
 import Pagination from '../../../components/ui/Pagination'
@@ -87,7 +87,7 @@ export default function CoursesCrud() {
     setSaving(true)
     setFormError(null)
 
-    // Preparamos payload: duration y price deben ser números
+    // Preparar payload: duration y price deben ser números
     const payload = {
       name: formData.name.trim(),
       duration: parseInt(formData.duration, 10) || 0,

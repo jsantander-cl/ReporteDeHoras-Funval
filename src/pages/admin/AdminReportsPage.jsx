@@ -17,9 +17,7 @@ export default function AdminReportsPage() {
   const url = useMemo(() => {
     const params = new URLSearchParams({ page, page_size: pageSize })
     if (statusFilter !== 'ALL') params.append('status', statusFilter)
-    // Si en el futuro implementas filtro por estudiante vía ID, añade:
-    // if (selectedStudentId) params.append('student_id', selectedStudentId)
-    return `/reports/?${params.toString()}`
+     return `/reports/?${params.toString()}`
   }, [page, pageSize, statusFilter])
 
   const { data: reportsData, loading: loadingReports, error: errorReports } = useFetch(url)
@@ -129,7 +127,8 @@ export default function AdminReportsPage() {
               <th className="px-6 pb-2 w-10"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody> 
+            {/* Aquí imprimí la API */}
             {filteredReports.map((report) => (
               <tr key={report.id} className="bg-white shadow-sm">
                 <td className="px-6 py-4 rounded-l-xl flex items-center gap-3">

@@ -1,8 +1,8 @@
 //📂 FASE 2: COMPONENTES COMPARTIDOS DE INTERFAZ
 //📌 Tarea 3: Botón funcional de Logout en Navbar
 
-import { Menu } from 'lucide-react'
-import LogoutButton from '../common/LogoutButton'
+import { Menu } from 'lucide-react' //importación destructurada para el icono del usuario
+import LogoutButton from '../common/LogoutButton' 
 
 const BarraSuperior = ({ onMenuClick, user }) => {
   return (

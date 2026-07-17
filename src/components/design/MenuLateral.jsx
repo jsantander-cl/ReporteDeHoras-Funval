@@ -51,6 +51,7 @@ const MenuLateral = ({ user, isOpen = true, onClose, onOpenProfile }) => {
           <nav className="flex flex-col gap-1">
             
             {/* === RUTAS DE NAVEGACIÓN === */}
+            {/* Mapea los links según el rol del usuario (ADMIN/STUDENT) NavLink para gestionar la clase 'active' */}
             {links.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
