@@ -6,7 +6,7 @@ import Pagination from '../../components/ui/Pagination'
 import Spinner from '../../components/common/Spinner'
 import Button from '../../components/common/Button'
 import { formatDateTime } from '../../utils/helpers'
-import { Plus, Eye, FileText } from 'lucide-react'
+import { Plus, Pencil, FileText } from 'lucide-react' // 🔹 Cambiado Eye por Pencil
 import api from '../../services/api'
  
 const MyReports = () => {
@@ -37,7 +37,6 @@ const MyReports = () => {
       const response = await api.get(`/reports/${id}/evidence/stream`, { responseType: 'blob' })
       const blob = new Blob([response.data], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
-     
       
       // Con esta línea se abrirá automáticamente en una pestaña nueva
       window.open(url, '_blank')
@@ -100,12 +99,13 @@ const MyReports = () => {
                           <button onClick={() => handleOpenPdf(r.id)} className="flex items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors font-medium">
                             <FileText className="w-4 h-4" /> <span className="text-xs">PDF</span>
                           </button>
+                          
+                          {/* 🔹 Botón Actualizado a Editar con icono de Lápiz */}
                           <button
-                           
                             onClick={() => navigate(`/student/reports/${r.id}/edit`, { state: { report: r } })}
                             className="flex items-center gap-1 text-slate-600 hover:text-primary transition-colors font-medium"
                           >
-                            <Eye className="w-4 h-4 mr-1" /> Ver
+                            <Pencil className="w-4 h-4 mr-1" /> Editar
                           </button>
                         </div>
                       </td>
@@ -130,4 +130,3 @@ const MyReports = () => {
 }
  
 export default MyReports
- 
