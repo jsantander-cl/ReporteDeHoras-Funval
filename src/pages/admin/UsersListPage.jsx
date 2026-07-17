@@ -1,21 +1,52 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form' // 👈 Importar para el formulario
+import { Search, Filter, Upload, Pencil, Trash2, Plus } from 'lucide-react'
+import toast from 'react-hot-toast' // 👈 Para notificaciones
+
 import { Search, Filter, Upload, UserPlus, Pencil, Trash2, Download } from 'lucide-react'
 import ModalConfirm from '../../components/ui/ModalConfirm'
 import Pagination from '../../components/ui/Pagination'
 import Spinner from '../../components/common/Spinner'
 import { useFetch } from '../../hooks/useFetch'
+import api from '../../services/api' // 👈 Usar api en lugar de fetch para mantener las cookies
+
+import Input from '../../components/common/Input'
+import Modal from '../../components/common/Modal'
+import Button from '../../components/common/Button'
 import api from '../../services/api'
 
 export default function UsersListPage() {
   const navigate = useNavigate()
 
+  // Estados de búsqueda y paginación
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [reloadFlag, setReloadFlag] = useState(0)
 
+  // Estados del Modal de Creación
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: {
+      role: 'STUDENT',
+      middle_name: '',
+      second_lastname: '',
+      phone_number: '',
+      birthdate: '',
+      country_id: '',
+      course_id: ''
+    }
+  })
+
+  // Fetch de datos auxiliares para los selects
+  const { data: countriesData } = useFetch('/countries/')
+  const { data: coursesData } = useFetch('/courses/')
+  const countries = countriesData || []
+  const courses = coursesData || []
+
+  // Debounce del input de búsqueda
   // Estados para importación CSV
   const [importResult, setImportResult] = useState(null) // { created, skipped, error? }
   const [importing, setImporting] = useState(false)
@@ -28,13 +59,70 @@ export default function UsersListPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
+  // Llamada a la API de usuarios
   const url = `/users/?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(debouncedSearch)}&_=${reloadFlag}`
-  const { data, loading, error } = useFetch(url)
+  const { data, loading, error, refetch } = useFetch(url)
 
   const [selectedUser, setSelectedUser] = useState(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  const fileInputRef = useRef(null)
+
+  const users = data?.items || data?.data || data || []
+  const totalUsers = data?.total || users.length
+
+  // --- FUNCIONES DEL MODAL DE CREACIÓN ---
+  const openModal = () => {
+    reset({
+      role: 'STUDENT',
+      middle_name: '',
+      second_lastname: '',
+      phone_number: '',
+      birthdate: '',
+      country_id: '',
+      course_id: ''
+    })
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    reset()
+  }
+
+  const handleCreate = async (formData) => {
+    try {
+      const payload = {
+        email: formData.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        document_number: formData.document_number,
+        role: formData.role,
+        password: formData.document_number, // Requerido por el backend
+        middle_name: formData.middle_name || null,
+        second_lastname: formData.second_lastname || null,
+        phone_number: formData.phone_number || null,
+        birthdate: formData.birthdate || null,
+        country_id: formData.country_id ? Number(formData.country_id) : null,
+        course_id: formData.course_id ? Number(formData.course_id) : null,
+      }
+
+      await api.post('/users/', payload)
+      toast.success('Usuario creado correctamente')
+      closeModal()
+      setReloadFlag(prev => prev + 1) // Recargar la lista
+      
+    } catch (err) {
+      const detail = err.response?.data?.detail
+      const errorMsg = Array.isArray(detail) 
+        ? detail.map(d => `${d.loc?.join('.')}: ${d.msg}`).join(' | ') 
+        : (typeof detail === 'string' ? detail : 'Error al crear el usuario')
+      toast.error(errorMsg, { duration: 8000 })
+    }
+  }
+
+  // --- FUNCIONES DE ELIMINACIÓN ---
   const users = data?.items || data?.data || data || []
   const totalUsers = data?.total || users.length
 
@@ -47,11 +135,15 @@ export default function UsersListPage() {
     if (!selectedUser) return
     setDeleting(true)
     try {
+      // Usamos api en lugar de fetch para mantener la cookie de sesión
+      await api.delete(`/users/${selectedUser.id}`)
+      toast.success('Usuario eliminado correctamente')
       await api.delete(`/users/${selectedUser.id}`)
       setIsDeleteModalOpen(false)
       setSelectedUser(null)
       setReloadFlag(prev => prev + 1)
     } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al eliminar usuario')
       const detail = err.response?.data?.detail
       const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : detail
       alert(msg || 'Error al eliminar usuario')
@@ -60,6 +152,24 @@ export default function UsersListPage() {
     }
   }
 
+  // --- IMPORTACIÓN CSV ---
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await api.post('/users/bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      
+      toast.success(`Importación exitosa: ${response.data.created} creados, ${response.data.skipped} omitidos`)
+      setImportedFileName('')
+      setReloadFlag(prev => prev + 1)
+    } catch (err) {
+      toast.error('Error al importar el archivo CSV')
   // 📤 Procesar archivo CSV seleccionado
   const handleFileChange = async (e) => {
     const file = e.target.files[0]
@@ -95,8 +205,12 @@ export default function UsersListPage() {
       // Resetear el input para permitir volver a seleccionar el mismo archivo
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
+    
+    // Limpiar el input para permitir seleccionar el mismo archivo de nuevo
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  // --- HELPERS ---
   // 📥 Descargar plantilla CSV de ejemplo
   const downloadTemplate = () => {
     const headers = ['email', 'first_name', 'last_name', 'document_number', 'role']
@@ -117,19 +231,13 @@ export default function UsersListPage() {
   // Helpers para formatear datos (sin cambios)
   const getInitials = (fullName) => {
     if (!fullName) return '?'
-    return fullName
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
+    return fullName.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
   }
 
   const formatDate = (dateString) => {
     if (!dateString) return '—'
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+      return new Date(dateString).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
     } catch {
       return dateString.slice(0, 10)
     }
@@ -141,20 +249,34 @@ export default function UsersListPage() {
     return 'Activo'
   }
 
+  if (loading && users.length === 0) return <Spinner text="Cargando usuarios..." />
+  if (error) return (
+    <div className="max-w-6xl mx-auto py-8 text-center text-red-500 font-bold">
+      Error al cargar usuarios: {error}
+    </div>
+  )
   if (loading) return <Spinner text="Cargando usuarios..." />
   if (error) return <div className="max-w-6xl mx-auto py-8 text-center text-red-500 font-bold">Error al cargar usuarios: {error}</div>
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
+      {/* Header */}
       <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-[#0C2340]">Gestión de Usuarios</h1>
           <p className="text-slate-500 text-sm mt-1">Administra y organiza los accesos de la plataforma institucional.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept=".csv" 
+            className="hidden" 
+          />
           <button
             onClick={() => fileInputRef.current.click()}
+            className="border border-[#004B93] text-[#004B93] px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50 transition-colors"
             disabled={importing}
             className="border border-[#004B93] text-[#004B93] px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50 disabled:opacity-50"
           >
@@ -166,15 +288,20 @@ export default function UsersListPage() {
           >
             <Download className="w-4 h-4" /> Plantilla CSV
           </button>
-          <button
-            onClick={() => navigate('/admin/users/create')}
-            className="bg-[#004B93] hover:bg-[#003870] text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm shadow-sm"
-          >
-            <UserPlus className="w-4 h-4" /> Crear Usuario
-          </button>
+          <Button onClick={openModal}>
+            <Plus className="w-4 h-4 mr-1" /> Nuevo Usuario
+          </Button>
         </div>
       </section>
 
+      {importedFileName && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center justify-between">
+          Archivo seleccionado: <strong>{importedFileName}</strong>
+          <button onClick={() => setImportedFileName('')} className="text-emerald-500 hover:text-emerald-800">Descartar</button>
+        </div>
+      )}
+
+      {/* Barra de búsqueda */}
       {/* Banner de resultado de importación */}
       {(importResult || importError) && (
         <div className={`text-xs font-semibold px-4 py-3 rounded-xl flex items-center justify-between ${
@@ -205,7 +332,7 @@ export default function UsersListPage() {
             className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-[#004B93]/20 text-sm shadow-sm"
           />
         </div>
-        <button className="border border-slate-200 bg-white text-slate-600 px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm">
+        <button className="border border-slate-200 bg-white text-slate-600 px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm hover:bg-slate-50">
           <Filter className="w-4 h-4" /> Filtrar
         </button>
       </section>
@@ -224,7 +351,7 @@ export default function UsersListPage() {
             return (
               <div
                 key={user.id}
-                className={`bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 shadow-sm ${
+                className={`bg-white border border-slate-200 rounded-xl p-5 flex flex-col md:grid md:grid-cols-12 md:items-center gap-4 shadow-sm transition-all ${
                   status === 'Inactivo' ? 'opacity-70' : ''
                 }`}
               >
@@ -250,10 +377,16 @@ export default function UsersListPage() {
                 </div>
                 <div className="md:col-span-2 text-slate-400 text-xs font-semibold">Reg: {regDate}</div>
                 <div className="md:col-span-1 flex justify-end gap-2">
-                  <button onClick={() => navigate(`/admin/users/${user.id}/edit`, { state: { user } })}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#004B93] hover:bg-slate-100">
-                    <Pencil className="w-4 h-4" /></button>
-                  <button onClick={() => triggerDelete(user)} className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50">
+                  <button 
+                    onClick={() => navigate(`/admin/users/${user.id}/edit`, { state: { user } })}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#004B93] hover:bg-slate-100 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => triggerDelete(user)} 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -267,6 +400,7 @@ export default function UsersListPage() {
         )}
       </div>
 
+      {/* Paginación */}
       <Pagination
         page={page}
         pageSize={pageSize}
@@ -274,6 +408,7 @@ export default function UsersListPage() {
         onPageChange={setPage}
       />
 
+      {/* Modal de Confirmación de Eliminación */}
       <ModalConfirm
         isOpen={isDeleteModalOpen}
         title="¿Eliminar Usuario?"
@@ -283,6 +418,86 @@ export default function UsersListPage() {
         onCancel={() => setIsDeleteModalOpen(false)}
         loading={deleting}
       />
+
+      {/* 👇 MODAL DE CREACIÓN DE USUARIO INTEGRADO 👇 */}
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="Nuevo Usuario" size="lg">
+        <form onSubmit={handleSubmit(handleCreate)} className="space-y-4">
+          
+          {/* Nombres */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Nombre *" {...register('first_name', { required: 'Obligatorio' })} error={errors.first_name?.message} />
+            <Input label="Apellido *" {...register('last_name', { required: 'Obligatorio' })} error={errors.last_name?.message} />
+            <Input label="Segundo Nombre" {...register('middle_name')} />
+            <Input label="Segundo Apellido" {...register('second_lastname')} />
+          </div>
+
+          {/* Datos principales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input 
+              label="Email (@funval.com) *" 
+              type="email"
+              {...register('email', { 
+                required: 'Obligatorio',
+                pattern: { value: /^[A-Z0-9._%+-]+@funval\.com$/i, message: 'Debe ser @funval.com' }
+              })} 
+              error={errors.email?.message} 
+            />
+            <Input 
+              label="Documento / Cédula *" 
+              {...register('document_number', { required: 'Obligatorio' })} 
+              error={errors.document_number?.message} 
+            />
+          </div>
+
+          {/* Selects */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+              <select {...register('role', { required: 'Obligatorio' })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="STUDENT">STUDENT</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
+              <select {...register('country_id')} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="">Seleccionar...</option>
+                {countries.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Curso</label>
+              <select {...register('course_id')} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <option value="">Seleccionar...</option>
+                {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Datos secundarios */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Teléfono" type="tel" {...register('phone_number')} />
+            <Input label="Fecha de nacimiento" type="date" {...register('birthdate')} />
+          </div>
+
+          {/* Nota sobre contraseña */}
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 flex items-start gap-2">
+            <span className="text-lg">💡</span>
+            <div>
+              <strong>Nota:</strong> La contraseña inicial del usuario será automáticamente su <strong>número de documento</strong>.
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+            <Button type="button" variant="outline" onClick={closeModal}>Cancelar</Button>
+            <Button type="submit" loading={isSubmitting}>Crear Usuario</Button>
+          </div>
+        </form>
+      </Modal>
+
     </div>
   )
 }

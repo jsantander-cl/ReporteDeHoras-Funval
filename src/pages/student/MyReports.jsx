@@ -8,28 +8,28 @@ import Button from '../../components/common/Button'
 import { formatDateTime } from '../../utils/helpers'
 import { Plus, Eye, FileText } from 'lucide-react'
 import api from '../../services/api'
-
+ 
 const MyReports = () => {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [pageSize] = useState(10)
-  
+ 
   // Estado para forzar la recarga
   const [refreshKey, setRefreshKey] = useState(0)
-
+ 
   // Forzamos el cambio al montar el componente para asegurar datos frescos
   useEffect(() => {
     setRefreshKey(prev => prev + 1)
   }, [])
-
+ 
   // Pasamos [page, refreshKey] como dependencias para que useFetch recargue si cambian
   const { data, loading } = useFetch(`/reports/?page=${page}&page_size=${pageSize}`, [page, refreshKey])
-
+ 
   const [isPdfOpen, setIsPdfOpen] = useState(false)
   const [pdfUrl, setPdfUrl] = useState(null)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfError, setPdfError] = useState(null)
-
+ 
   const handleOpenPdf = async (id) => {
     setPdfLoading(true)
     setPdfError(null)
@@ -37,6 +37,7 @@ const MyReports = () => {
       const response = await api.get(`/reports/${id}/evidence/stream`, { responseType: 'blob' })
       const blob = new Blob([response.data], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
+     
       
       // Con esta línea se abrirá automáticamente en una pestaña nueva
       window.open(url, '_blank')
@@ -47,10 +48,10 @@ const MyReports = () => {
       setPdfLoading(false)
     }
   }
-
+ 
   const reports = data?.items || []
   const totalPages = Math.ceil((data?.total || 0) / pageSize)
-
+ 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -64,7 +65,7 @@ const MyReports = () => {
           </Button>
         </Link>
       </div>
-
+ 
       <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
         {loading ? (
           <Spinner />
@@ -99,6 +100,7 @@ const MyReports = () => {
                           <button onClick={() => handleOpenPdf(r.id)} className="flex items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors font-medium">
                             <FileText className="w-4 h-4" /> <span className="text-xs">PDF</span>
                           </button>
+                          <button
                           <button 
                             onClick={() => navigate(`/student/reports/${r.id}/edit`, { state: { report: r } })}
                             className="flex items-center gap-1 text-slate-600 hover:text-primary transition-colors font-medium"
@@ -126,5 +128,6 @@ const MyReports = () => {
     </div>
   )
 }
-
+ 
 export default MyReports
+ 
