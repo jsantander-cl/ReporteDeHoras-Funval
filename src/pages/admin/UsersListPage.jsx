@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form' // 👈 Importar para el formulario
 import { Search, Filter, Upload, Pencil, Trash2, Plus } from 'lucide-react'
 import toast from 'react-hot-toast' // 👈 Para notificaciones
 
+import { Search, Filter, Upload, UserPlus, Pencil, Trash2, Download } from 'lucide-react'
 import ModalConfirm from '../../components/ui/ModalConfirm'
 import Pagination from '../../components/ui/Pagination'
 import Spinner from '../../components/common/Spinner'
@@ -13,6 +14,7 @@ import api from '../../services/api' // 👈 Usar api en lugar de fetch para man
 import Input from '../../components/common/Input'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
+import api from '../../services/api'
 
 export default function UsersListPage() {
   const navigate = useNavigate()
@@ -45,6 +47,13 @@ export default function UsersListPage() {
   const courses = coursesData || []
 
   // Debounce del input de búsqueda
+  // Estados para importación CSV
+  const [importResult, setImportResult] = useState(null) // { created, skipped, error? }
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState(null)
+
+  const fileInputRef = useRef(null)
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
     return () => clearTimeout(timer)
@@ -54,7 +63,6 @@ export default function UsersListPage() {
   const url = `/users/?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(debouncedSearch)}&_=${reloadFlag}`
   const { data, loading, error, refetch } = useFetch(url)
 
-  const [importedFileName, setImportedFileName] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -115,6 +123,9 @@ export default function UsersListPage() {
   }
 
   // --- FUNCIONES DE ELIMINACIÓN ---
+  const users = data?.items || data?.data || data || []
+  const totalUsers = data?.total || users.length
+
   const triggerDelete = (user) => {
     setSelectedUser(user)
     setIsDeleteModalOpen(true)
@@ -127,11 +138,15 @@ export default function UsersListPage() {
       // Usamos api en lugar de fetch para mantener la cookie de sesión
       await api.delete(`/users/${selectedUser.id}`)
       toast.success('Usuario eliminado correctamente')
+      await api.delete(`/users/${selectedUser.id}`)
       setIsDeleteModalOpen(false)
       setSelectedUser(null)
       setReloadFlag(prev => prev + 1)
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Error al eliminar usuario')
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : detail
+      alert(msg || 'Error al eliminar usuario')
     } finally {
       setDeleting(false)
     }
@@ -155,6 +170,40 @@ export default function UsersListPage() {
       setReloadFlag(prev => prev + 1)
     } catch (err) {
       toast.error('Error al importar el archivo CSV')
+  // 📤 Procesar archivo CSV seleccionado
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Limpiar resultados anteriores
+    setImportResult(null)
+    setImportError(null)
+    setImporting(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file) // el backend espera un campo 'file'
+
+      const res = await api.post('/users/bulk', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+
+      const result = res.data
+      // Se espera un objeto del tipo: { created: 5, skipped: 2, errors: [...] }
+      setImportResult({
+        created: result.created || 0,
+        skipped: result.skipped || 0,
+        errors: result.errors || [],
+      })
+      setReloadFlag(prev => prev + 1) // refrescar lista
+    } catch (err) {
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : detail
+      setImportError(msg || 'Error al procesar el archivo CSV')
+    } finally {
+      setImporting(false)
+      // Resetear el input para permitir volver a seleccionar el mismo archivo
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
     
     // Limpiar el input para permitir seleccionar el mismo archivo de nuevo
@@ -162,6 +211,24 @@ export default function UsersListPage() {
   }
 
   // --- HELPERS ---
+  // 📥 Descargar plantilla CSV de ejemplo
+  const downloadTemplate = () => {
+    const headers = ['email', 'first_name', 'last_name', 'document_number', 'role']
+    const sampleRow = ['usuario@ejemplo.com', 'Nombre', 'Apellido', '12345678', 'STUDENT']
+    const csvContent = [headers.join(','), sampleRow.join(',')].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'plantilla_usuarios.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  // Helpers para formatear datos (sin cambios)
   const getInitials = (fullName) => {
     if (!fullName) return '?'
     return fullName.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
@@ -188,6 +255,8 @@ export default function UsersListPage() {
       Error al cargar usuarios: {error}
     </div>
   )
+  if (loading) return <Spinner text="Cargando usuarios..." />
+  if (error) return <div className="max-w-6xl mx-auto py-8 text-center text-red-500 font-bold">Error al cargar usuarios: {error}</div>
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
@@ -208,8 +277,16 @@ export default function UsersListPage() {
           <button
             onClick={() => fileInputRef.current.click()}
             className="border border-[#004B93] text-[#004B93] px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50 transition-colors"
+            disabled={importing}
+            className="border border-[#004B93] text-[#004B93] px-5 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50 disabled:opacity-50"
           >
-            <Upload className="w-4 h-4" /> Importación Masiva (CSV)
+            <Upload className="w-4 h-4" /> {importing ? 'Importando...' : 'Importación Masiva (CSV)'}
+          </button>
+          <button
+            onClick={downloadTemplate}
+            className="border border-slate-200 bg-white text-slate-600 px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold text-sm hover:bg-slate-50"
+          >
+            <Download className="w-4 h-4" /> Plantilla CSV
           </button>
           <Button onClick={openModal}>
             <Plus className="w-4 h-4 mr-1" /> Nuevo Usuario
@@ -225,6 +302,25 @@ export default function UsersListPage() {
       )}
 
       {/* Barra de búsqueda */}
+      {/* Banner de resultado de importación */}
+      {(importResult || importError) && (
+        <div className={`text-xs font-semibold px-4 py-3 rounded-xl flex items-center justify-between ${
+          importError ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+        }`}>
+          {importError ? (
+            <span>Error: {importError}</span>
+          ) : (
+            <span>
+              Importación completada: <strong>{importResult.created} creado(s)</strong>
+              {importResult.skipped > 0 && `, ${importResult.skipped} omitido(s)`}
+              {importResult.errors?.length > 0 && ` (${importResult.errors.length} error(es))`}
+            </span>
+          )}
+          <button onClick={() => { setImportResult(null); setImportError(null) }} className="hover:underline">Cerrar</button>
+        </div>
+      )}
+
+      {/* Búsqueda y filtro */}
       <section className="flex flex-col md:flex-row gap-3">
         <div className="w-full md:flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -241,7 +337,7 @@ export default function UsersListPage() {
         </button>
       </section>
 
-      {/* Lista de usuarios */}
+      {/* Lista de usuarios (sin cambios) */}
       <div className="flex flex-col gap-3">
         {users.length > 0 ? (
           users.map((user) => {

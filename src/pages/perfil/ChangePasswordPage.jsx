@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function ChangePasswordPage() {
 
     setIsSubmitting(true);
     try {
-      await axios.patch('/api/v1/profile/password', {
+      await api.patch('/profile/password', {
         current_password: passwords.currentPassword,
         new_password: passwords.newPassword
       });

@@ -3,17 +3,15 @@
 
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import api from '../../../services/api' 
 import Spinner from '../../../components/common/Spinner'
+import ModalConfirm from '../../../components/ui/ModalConfirm'
 
 export default function CategoriesCrud() {
   const navigate = useNavigate()
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  
-  // Estado para alertas
-  const [toastMessage, setToastMessage] = useState(null)
-  const [toastType, setToastType] = useState('success') 
 
   // Estados del Modal (Crear o Editar)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -22,14 +20,9 @@ export default function CategoriesCrud() {
   const [categoryName, setCategoryName] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Función para mostrar alertas temporales 
-  const showToast = (message, type = 'success') => {
-    setToastMessage(message)
-    setToastType(type)
-    setTimeout(() => {
-      setToastMessage(null)
-    }, 4000) 
-  }
+  // Estado del modal de confirmación de borrado
+  const [deleteTarget, setDeleteTarget] = useState(null) // { id, name }
+  const [deleting, setDeleting] = useState(false)
 
   // 1. Listado: GET 
   const fetchCategories = async () => {
@@ -39,7 +32,7 @@ export default function CategoriesCrud() {
       setCategories(res.data)
     } catch (err) {
       console.error(err)
-      showToast('Error al cargar las categorías', 'error')
+      toast.error('Error al cargar las categorías')
     } finally {
       setLoading(false)
     }
@@ -75,53 +68,43 @@ export default function CategoriesCrud() {
       if (isEditing) {
         // PATCH /api/v1/categories/{id}
         await api.patch(`/categories/${selectedId}`, { name: categoryName })
-        showToast('Categoría actualizada con éxito')
+        toast.success('Categoría actualizada con éxito')
       } else {
         // POST /api/v1/categories/
         await api.post('/categories/', { name: categoryName })
-        showToast('Categoría creada con éxito')
+        toast.success('Categoría creada con éxito')
       }
       setIsModalOpen(false)
       fetchCategories()
     } catch (err) {
       console.error(err)
       const errMsg = err.response?.data?.detail || 'Ocurrió un error en la operación'
-      showToast(errMsg, 'error')
+      toast.error(errMsg)
     } finally {
       setSubmitting(false)
     }
   }
 
   // 4. Eliminar (soft-delete): DELETE /api/v1/categories/{id}
-  const handleDelete = async (id, name) => {
-    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar la categoría "${name}"?`)
-    if (!confirmDelete) return
-
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await api.delete(`/categories/${id}`)
-      showToast('Categoría eliminada con éxito')
+      await api.delete(`/categories/${deleteTarget.id}`)
+      toast.success('Categoría eliminada con éxito')
+      setDeleteTarget(null)
       fetchCategories()
     } catch (err) {
       console.error(err)
       const errMsg = err.response?.data?.detail || 'Error al eliminar la categoría'
-      showToast(errMsg, 'error')
+      toast.error(errMsg)
+    } finally {
+      setDeleting(false)
     }
   }
 
   return (
     <div className="max-w-5xl mx-auto p-6 relative">
-      
-      {/* Sistema Toast Flotante */}
-      {toastMessage && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all duration-300 transform translate-y-0 ${
-          toastType === 'success' 
-            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-            : 'bg-rose-50 text-rose-800 border-rose-200'
-        }`}>
-          <span>{toastType === 'success' ? '✅' : '❌'}</span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* Cabecera */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -175,7 +158,7 @@ export default function CategoriesCrud() {
                       Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(category.id, category.name)}
+                      onClick={() => setDeleteTarget({ id: category.id, name: category.name })}
                       className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-all"
                     >
                       Eliminar
@@ -240,6 +223,17 @@ export default function CategoriesCrud() {
           </div>
         </div>
       )}
+
+      {/* Modal de confirmación de borrado (Tarea 9, compartido) */}
+      <ModalConfirm
+        isOpen={!!deleteTarget}
+        title="¿Eliminar Categoría?"
+        message={deleteTarget && `¿Estás seguro de que deseas eliminar la categoría "${deleteTarget.name}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Sí, Eliminar Categoría"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
     </div>
   )

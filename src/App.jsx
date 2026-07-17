@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Spinner from './components/common/Spinner'
-import ProtectedRoute from './components/layout/ProtectedRoute'
 
 import PrivateRoute from './components/routes/PrivateRoute'
 import RoleRoute from './components/routes/RoleRoute'
@@ -23,10 +22,6 @@ import EditReportPage from './pages/estudiante/EditReportPage'
 import CategoriesCrud from './pages/admin/mantenimientos/CategoriesCrud'
 import CountriesCrud from './pages/admin/mantenimientos/CountriesCrud'
 import CoursesCrud from './pages/admin/mantenimientos/CoursesCrud'
-
-// import UserForm from './pages/admin/UserForm'
-// import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
-// import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 import UserEditPage from './components/ui/UserEditPage'
 
@@ -67,17 +62,10 @@ function App() {
           <Route element={<RoleRoute allowedRoles={['STUDENT']} />}>
             <Route path="/student/dashboard" element={<StudentDashboard />} />
 
-          <Route path="/student/reports" element={
-          <ProtectedRoute allowedRoles={['STUDENT']}><MyReports /></ProtectedRoute>
-        } />
-        <Route path="/student/reports/:id" element={
-          <ProtectedRoute allowedRoles={['STUDENT']}><ReportDetail /></ProtectedRoute>
-        } /> 
+            <Route path="/student/reports" element={<MyReports />} />
+            <Route path="/student/reports/:id" element={<ReportDetail />} />
+            <Route path="/student/reports/:id/edit" element={<EditReportPage />} />
 
-        <Route path="/student/reports/:id/edit" element={
-    <ProtectedRoute allowedRoles={['STUDENT']}><EditReportPage /></ProtectedRoute>
-  } />
-            
             {/* ruta del formulario aquí */}
             <Route path="/student/reports/new" element={<FormularioReporte />} />
           </Route>
@@ -89,10 +77,10 @@ function App() {
             <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
-            <Route path="/admin/maintenance/categoriescrud" element={<CategoriesCrud />}/> 
+            <Route path="/admin/maintenance/categories" element={<CategoriesCrud />} />
             <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
             <Route path="/admin/maintenance/countries" element={<CountriesCrud />} />
-            <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />      
+            <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />
           </Route>
           
 
