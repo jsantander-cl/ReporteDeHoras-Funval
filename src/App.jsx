@@ -13,6 +13,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
+import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 import FormularioReporte from './components/FormularioReporte'
 import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 
@@ -61,6 +62,7 @@ function App() {
           <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
+            <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
           </Route>
