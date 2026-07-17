@@ -19,6 +19,7 @@ import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
 import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 import FormularioReporte from './components/FormularioReporte'
+import CountriesCrud from './pages/admin/mantenimientos/CountriesCrud'
 
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
@@ -82,6 +83,8 @@ function App() {
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
             <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
+            <Route path="/admin/maintenance/countries" element={<CountriesCrud />} />
+
           </Route>
 
         </Route>
