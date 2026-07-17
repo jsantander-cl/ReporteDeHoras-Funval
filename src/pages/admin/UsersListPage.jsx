@@ -66,6 +66,30 @@ export default function UsersListPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Estados del panel de Filtros Avanzados
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [roleFilter, setRoleFilter] = useState('ALL') // ALL | ADMIN | STUDENT
+  const [statusFilter, setStatusFilter] = useState('ALL') // ALL | ACTIVE | INACTIVE
+  const filterPanelRef = useRef(null)
+
+  // Cerrar el panel de filtros al hacer click fuera de él
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterPanelRef.current && !filterPanelRef.current.contains(e.target)) {
+        setIsFilterOpen(false)
+      }
+    }
+    if (isFilterOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isFilterOpen])
+
+  const activeFilterCount = (roleFilter !== 'ALL' ? 1 : 0) + (statusFilter !== 'ALL' ? 1 : 0)
+
+  const clearFilters = () => {
+    setRoleFilter('ALL')
+    setStatusFilter('ALL')
+  }
+
 
   // --- FUNCIONES DEL MODAL DE CREACIÓN ---
   const openModal = () => {
@@ -222,6 +246,30 @@ export default function UsersListPage() {
     return 'Activo'
   }
 
+  // --- FILTRADO EN CLIENTE ---
+  // Se aplica siempre como respaldo, ya que el backend puede ignorar
+  // el parámetro "search" o no soportar filtros de rol/estado.
+  const normalize = (str) => (str || '').toString().toLowerCase().trim()
+
+  const filteredUsers = users.filter((user) => {
+    const name = user.full_name || user.name || ''
+    const email = user.email || ''
+    const role = user.role || 'STUDENT'
+    const status = getUserStatus(user)
+
+    const query = normalize(debouncedSearch)
+    const matchesSearch = query === ''
+      || normalize(name).includes(query)
+      || normalize(email).includes(query)
+
+    const matchesRole = roleFilter === 'ALL' || role === roleFilter
+    const matchesStatus = statusFilter === 'ALL'
+      || (statusFilter === 'ACTIVE' && status === 'Activo')
+      || (statusFilter === 'INACTIVE' && status === 'Inactivo')
+
+    return matchesSearch && matchesRole && matchesStatus
+  })
+
   if (loading && users.length === 0) return <Spinner text="Cargando usuarios..." />
   if (error) return (
     <div className="max-w-6xl mx-auto py-8 text-center text-red-500 font-bold">
@@ -294,15 +342,90 @@ export default function UsersListPage() {
             className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-[#004B93]/20 text-sm shadow-sm"
           />
         </div>
-        <button className="border border-slate-200 bg-white text-slate-600 px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm hover:bg-slate-50">
-          <Filter className="w-4 h-4" /> Filtrar
-        </button>
+        <div className="relative" ref={filterPanelRef}>
+          <button
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+            className={`border px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm transition-colors ${
+              activeFilterCount > 0
+                ? 'border-[#004B93] bg-[#E6F0FA] text-[#004B93]'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Filter className="w-4 h-4" /> Filtrar
+            {activeFilterCount > 0 && (
+              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#004B93] text-white text-[10px] font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
+          {isFilterOpen && (
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-20">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-slate-700 text-sm">Filtros Avanzados</h4>
+                {activeFilterCount > 0 && (
+                  <button onClick={clearFilters} className="text-xs text-[#004B93] font-semibold hover:underline">
+                    Limpiar
+                  </button>
+                )}
+              </div>
+
+              {/* Filtro por Rol */}
+              <div className="mb-4">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Rol</p>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { value: 'ALL', label: 'Todos' },
+                    { value: 'ADMIN', label: 'Admin' },
+                    { value: 'STUDENT', label: 'Student' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setRoleFilter(opt.value)}
+                      className={`text-left text-sm px-3 py-2 rounded-lg border font-semibold transition-colors ${
+                        roleFilter === opt.value
+                          ? 'border-[#004B93] bg-[#E6F0FA] text-[#004B93]'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro por Estado */}
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Estado</p>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { value: 'ALL', label: 'Todos' },
+                    { value: 'ACTIVE', label: 'Activos' },
+                    { value: 'INACTIVE', label: 'Inactivos' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setStatusFilter(opt.value)}
+                      className={`text-left text-sm px-3 py-2 rounded-lg border font-semibold transition-colors ${
+                        statusFilter === opt.value
+                          ? 'border-[#004B93] bg-[#E6F0FA] text-[#004B93]'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Lista de usuarios */}
       <div className="flex flex-col gap-3">
-        {users.length > 0 ? (
-          users.map((user) => {
+        {filteredUsers.length > 0 ? (
+          filteredUsers.map((user) => {
             const status = getUserStatus(user)
             const initials = getInitials(user.full_name || user.name)
             const name = user.full_name || user.name || 'Sin nombre'
