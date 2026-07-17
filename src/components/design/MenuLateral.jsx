@@ -14,6 +14,7 @@ const ADMIN_LINKS = [
 const STUDENT_LINKS = [
   { to: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/student/reports', label: 'Mis Reportes', icon: FileText },
+  
 ]
 
 const MenuLateral = ({ user, isOpen = true, onClose, onOpenProfile }) => {
