@@ -2,11 +2,12 @@
 //📌 Tarea 5: Sidebar con navegación dinámica según rol
 
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, FileText, Users, Settings, User } from 'lucide-react'
+import { LayoutDashboard, FileText, Users, Settings, User, AlertTriangle } from 'lucide-react'
 
 const ADMIN_LINKS = [
-  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/admin/reports', label: 'Reports', icon: FileText },
+  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/admin/reports', label: 'Reports', icon: FileText, end: true },
+  { to: '/admin/reports/in-debt', label: 'Deudores', icon: AlertTriangle },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/maintenance', label: 'Maintenance', icon: Settings },
 ]
@@ -14,6 +15,7 @@ const ADMIN_LINKS = [
 const STUDENT_LINKS = [
   { to: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/student/reports', label: 'Mis Reportes', icon: FileText },
+  
 ]
 
 const MenuLateral = ({ user, isOpen = true, onClose, onOpenProfile }) => {
@@ -49,10 +51,11 @@ const MenuLateral = ({ user, isOpen = true, onClose, onOpenProfile }) => {
           <nav className="flex flex-col gap-1">
             
             {/* === RUTAS DE NAVEGACIÓN === */}
-            {links.map(({ to, label, icon: Icon }) => (
+            {links.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
+                end={end}
                 onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${

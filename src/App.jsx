@@ -17,14 +17,18 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
+import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 import FormularioReporte from './components/FormularioReporte'
 import EditReportPage from './pages/estudiante/EditReportPage'
 import CategoriesCrud from './pages/admin/mantenimientos/CategoriesCrud'
+import CountriesCrud from './pages/admin/mantenimientos/CountriesCrud'
+import CoursesCrud from './pages/admin/mantenimientos/CoursesCrud'
 
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
 // import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
 import ChangePasswordPage from './pages/perfil/ChangePasswordPage'
+import UserEditPage from './components/ui/UserEditPage'
 
 function App() {
   const { user, isLoading } = useAuth()
@@ -82,9 +86,15 @@ function App() {
           <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/reports" element={<AdminReportsPage />} />
+            <Route path="/admin/reports/in-debt" element={<InDebtStudentsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
             <Route path="/admin/maintenance/categoriescrud" element={<CategoriesCrud />}/> 
+            <Route path="/admin/users/:userId/edit" element={<UserEditPage />} />
+            <Route path="/admin/maintenance/countries" element={<CountriesCrud />} />
+            <Route path="/admin/maintenance/courses" element={<CoursesCrud />} />
+
+
           </Route>
           
 
