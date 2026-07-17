@@ -1,6 +1,3 @@
-//📂 FASE 5: MÓDULO DE ADMINISTRACIÓN
-//📌 Tarea 19: Gestión de Categorías (CRUD completo con toasts)
-
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -24,7 +21,11 @@ export default function CategoriesCrud() {
   const [deleteTarget, setDeleteTarget] = useState(null) // { id, name }
   const [deleting, setDeleting] = useState(false)
 
-  // 1. Listado: GET 
+  /* 
+   * CLAVE 1: Lectura de Datos (READ).
+   * Consumimos de manera asíncrona el endpoint `/categories/` para poblar el 
+   * listado de categorías. Incluimos estados de carga y manejo semántico de errores.
+   */
   const fetchCategories = async () => {
     try {
       setLoading(true)
@@ -38,11 +39,12 @@ export default function CategoriesCrud() {
     }
   }
 
+  // Efecto de inicialización al montar la vista
   useEffect(() => {
     fetchCategories()
   }, [])
 
-  // Abrir modal para Crear
+  // Inicializa el modal en estado de creación libre de datos residuales
   const handleOpenCreate = () => {
     setIsEditing(false)
     setSelectedId(null)
@@ -50,7 +52,7 @@ export default function CategoriesCrud() {
     setIsModalOpen(true)
   }
 
-  // Abrir modal para Editar
+  // Carga los datos de la categoría seleccionada en el formulario del modal para su edición
   const handleOpenEdit = (category) => {
     setIsEditing(true)
     setSelectedId(category.id)
@@ -58,7 +60,13 @@ export default function CategoriesCrud() {
     setIsModalOpen(true)
   }
 
-  // Crear (POST) y Editar (PATCH)
+  /* 
+   * CLAVE 2: Flujo Híbrido de Escritura (CREATE / UPDATE).
+   * Un único manejador procesa las solicitudes POST o PATCH según el estado `isEditing`:
+   * - Si está editando: Envía un PATCH al recurso específico `/categories/{id}`.
+   * - Si es nueva: Envía un POST al endpoint raíz `/categories/`.
+   * En ambos casos se valida la entrada en cliente y se refresca la tabla al finalizar con éxito.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!categoryName.trim()) return
@@ -75,7 +83,7 @@ export default function CategoriesCrud() {
         toast.success('Categoría creada con éxito')
       }
       setIsModalOpen(false)
-      fetchCategories()
+      fetchCategories() // Sincronización del estado de la tabla
     } catch (err) {
       console.error(err)
       const errMsg = err.response?.data?.detail || 'Ocurrió un error en la operación'
@@ -85,15 +93,20 @@ export default function CategoriesCrud() {
     }
   }
 
-  // 4. Eliminar (soft-delete): DELETE /api/v1/categories/{id}
+  /* 
+   * CLAVE 3: Remoción Segura de Recursos (DELETE / SOFT-DELETE).
+   * Consumo asíncrono del endpoint DELETE `/categories/{id}` para dar de baja el registro.
+   * Se integra con el modal de confirmación (`ModalConfirm`) para prevenir ejecuciones accidentales,
+   * garantizando una experiencia de usuario (UX) segura y fluida.
+   */
   const confirmDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
     try {
       await api.delete(`/categories/${deleteTarget.id}`)
       toast.success('Categoría eliminada con éxito')
-      setDeleteTarget(null)
-      fetchCategories()
+      setDeleteTarget(null) // Cierra el modal de confirmación
+      fetchCategories() // Sincronización del estado de la tabla
     } catch (err) {
       console.error(err)
       const errMsg = err.response?.data?.detail || 'Error al eliminar la categoría'
@@ -106,7 +119,7 @@ export default function CategoriesCrud() {
   return (
     <div className="max-w-5xl mx-auto p-6 relative">
 
-      {/* Cabecera */}
+      {/* Cabecera del Panel */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <button 
@@ -126,7 +139,7 @@ export default function CategoriesCrud() {
         </button>
       </div>
 
-      {/* Listado */}
+      {/* Tabla Dinámica con estados alternativos */}
       {loading ? (
         <div className="min-h-[40vh] flex flex-col items-center justify-center">
           <Spinner size="lg" text="Cargando categorías..." />
@@ -157,6 +170,7 @@ export default function CategoriesCrud() {
                     >
                       Editar
                     </button>
+                    {/* Botón para abrir modal de confirmación de borrado */}
                     <button
                       onClick={() => setDeleteTarget({ id: category.id, name: category.name })}
                       className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-all"
@@ -171,7 +185,10 @@ export default function CategoriesCrud() {
         </div>
       )}
 
-      {/* Modal Modular de Registro / Edición */}
+      {/* CLAVE 4: Modal Único Multipropósito (Formulario de Creación / Edición)
+       * Reutilizamos la misma estructura visual controlando los títulos y textos con la variable `isEditing`.
+       * El envío del formulario se delega al submit unificado de React.
+       */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-xl border border-slate-100 overflow-hidden transform transition-all">
@@ -224,7 +241,7 @@ export default function CategoriesCrud() {
         </div>
       )}
 
-      {/* Modal de confirmación de borrado (Tarea 9, compartido) */}
+      {/* Modal Reutilizable de Confirmación de Borrado */}
       <ModalConfirm
         isOpen={!!deleteTarget}
         title="¿Eliminar Categoría?"
