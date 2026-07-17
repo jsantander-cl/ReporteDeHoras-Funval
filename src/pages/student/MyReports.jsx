@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
 import StatusBadge from '../../components/common/StatusBadge'
-import Pagination from '../../components/common/Pagination'
+import Pagination from '../../components/ui/Pagination'
+//import Pagination from '../../components/common/Pagination'
 import Spinner from '../../components/common/Spinner'
 import Button from '../../components/common/Button'
 import { formatDateTime } from '../../utils/helpers'
@@ -79,7 +80,8 @@ const MyReports = () => {
                 </tbody>
               </table>
             </div>
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} loading={loading} />
+            
+            <Pagination page={page} total={totalPages} onPageChange={setPage} />
           </>
         )}
       </div>
