@@ -18,6 +18,8 @@ import AdminReportsPage from './pages/admin/AdminReportsPage'
 import UsersListPage from './pages/admin/UsersListPage'
 import MantenimientoGlobal from './pages/admin/mantenimientos/MantenimientoGlobal'
 import FormularioReporte from './components/FormularioReporte'
+import EditReportPage from './pages/estudiante/EditReportPage'
+import CategoriesCrud from './pages/admin/mantenimientos/CategoriesCrud'
 
 // import UserForm from './pages/admin/UserForm'
 // import InDebtStudentsPage from './pages/admin/InDebtStudentsPage'
@@ -67,6 +69,10 @@ function App() {
         <Route path="/student/reports/:id" element={
           <ProtectedRoute allowedRoles={['STUDENT']}><ReportDetail /></ProtectedRoute>
         } /> 
+
+        <Route path="/student/reports/:id/edit" element={
+    <ProtectedRoute allowedRoles={['STUDENT']}><EditReportPage /></ProtectedRoute>
+  } />
             
             {/* ruta del formulario aquí */}
             <Route path="/student/reports/new" element={<FormularioReporte />} />
@@ -78,7 +84,9 @@ function App() {
             <Route path="/admin/reports" element={<AdminReportsPage />} />
             <Route path="/admin/users" element={<UsersListPage />} />
             <Route path="/admin/maintenance" element={<MantenimientoGlobal />} />
+            <Route path="/admin/maintenance/categoriescrud" element={<CategoriesCrud />}/> 
           </Route>
+          
 
         </Route>
       </Route>
